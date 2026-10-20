@@ -1,6 +1,11 @@
 import { z } from "zod";
 
 const serverSchema = z.object({
+  NODE_ENV: z
+    .enum(["development", "test", "production"])
+    .default("development"),
+  BETTER_AUTH_SECRET: z.string().min(32),
+  DATABASE_URL: z.url(),
   UPSTASH_REDIS_REST_URL: z.url(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
   AWS_ACCESS_KEY_ID: z.string().min(1),
