@@ -1,7 +1,7 @@
 name: Playwright Tests
 
 # E2E tests are slow, so they only run on pull requests targeting main.
-# Lint, typecheck and unit tests run locally in the husky pre-commit hook.
+# Lint, typecheck, unit tests and build run in ci.yml.
 on:
   pull_request:
     branches: [main]
