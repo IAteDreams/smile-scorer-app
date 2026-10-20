@@ -5,6 +5,7 @@ const serverSchema = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
   BETTER_AUTH_SECRET: z.string().min(32),
+  RESEND_API_KEY: z.string(),
   DATABASE_URL: z.url(),
   UPSTASH_REDIS_REST_URL: z.url(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
