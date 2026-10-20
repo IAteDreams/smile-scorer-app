@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    # Placeholders that pass lib/env.ts validation; CI never calls real services.
+    # Swap a value for ${{ secrets.NAME }} only when a test needs the live service.
+    env:
+      UPSTASH_REDIS_REST_URL: https://placeholder.upstash.io
+      UPSTASH_REDIS_REST_TOKEN: placeholder
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: placeholder
+      AWS_ACCESS_KEY_ID: placeholder
+      AWS_SECRET_ACCESS_KEY: placeholder
+      AWS_REGION: us-east-1
+      USE_MOCK_SCORER: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Format check
+        run: pnpm format:check
+      - name: Type-check
+        run: pnpm typecheck
+      - name: Test
+        run: pnpm test
+      - name: Build
+        run: pnpm build
