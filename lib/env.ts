@@ -8,6 +8,7 @@ const serverSchema = z.object({
   RESEND_API_KEY: z.string(),
   POSTGRES_URL: z.url(),
   SUPABASE_SECRET_KEY: z.string().min(1),
+  SUPABASE_PHOTO_BUCKET: z.string().trim().min(1),
   KV_REST_API_URL: z.url(),
   KV_REST_API_TOKEN: z.string().min(1),
   AWS_ACCESS_KEY_ID: z.string().min(1),

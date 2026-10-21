@@ -23,6 +23,7 @@ vi.mock("@/lib/env", () => ({
   env: {
     NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
     SUPABASE_SECRET_KEY: "secret",
+    SUPABASE_PHOTO_BUCKET: "test-photos",
   },
 }));
 vi.mock("@supabase/supabase-js", () => ({
@@ -46,10 +47,10 @@ describe("storage", () => {
     expect(photoPath("user-1", "photo-1")).toBe("user-1/photo-1");
   });
 
-  it("uploads to the photos bucket without overwriting", async () => {
+  it("uploads to the configured bucket without overwriting", async () => {
     const bytes = new Uint8Array([1, 2, 3]);
     await uploadPhoto("user-1/photo-1", bytes, "image/jpeg");
-    expect(from).toHaveBeenCalledWith("photos");
+    expect(from).toHaveBeenCalledWith("test-photos");
     expect(bucket.upload).toHaveBeenCalledWith("user-1/photo-1", bytes, {
       contentType: "image/jpeg",
       upsert: false,

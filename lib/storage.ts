@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
-import { PHOTO_BUCKET, PHOTO_URL_TTL_SECONDS } from "@/lib/constants/storage";
+import { PHOTO_URL_TTL_SECONDS } from "@/lib/constants/storage";
 import { env } from "@/lib/env";
 
 const supabase = createClient(
@@ -10,7 +10,7 @@ const supabase = createClient(
   { auth: { persistSession: false, autoRefreshToken: false } },
 );
 
-const photos = () => supabase.storage.from(PHOTO_BUCKET);
+const photos = () => supabase.storage.from(env.SUPABASE_PHOTO_BUCKET);
 
 type PhotoUrlOptions = {
   expiresIn?: number;
