@@ -39,6 +39,8 @@ const setup = (
     onFlightStart: vi.fn(),
     onClosed: vi.fn(),
     onPhotoError: vi.fn(async () => false),
+    downloading: false,
+    onDownload: vi.fn(),
     ...overrides,
   };
   render(<PhotoDetails {...props} />);
@@ -145,5 +147,23 @@ describe("PhotoDetails", () => {
   it("renders nothing while closed", () => {
     setup({ open: false, photo: null });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("downloads the photo", () => {
+    const { onDownload } = setup();
+    fireEvent.click(screen.getByRole("button", { name: "Download" }));
+    expect(onDownload).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the download in progress", () => {
+    setup({ downloading: true });
+    expect(screen.getByRole("button", { name: "Downloading…" })).toBeDisabled();
+  });
+
+  it("hides the download when the photo is unavailable", () => {
+    setup({ photo: { ...PHOTO, photoUrl: null } });
+    expect(
+      screen.queryByRole("button", { name: "Download" }),
+    ).not.toBeInTheDocument();
   });
 });

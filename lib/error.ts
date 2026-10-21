@@ -18,7 +18,13 @@ export const ERRORS = {
     busy: "Scoring is busy right now. Try again in a moment.",
     rateLimited: "You've scored a lot of photos. Wait a minute and try again.",
   },
+  photo: {
+    downloadFailed: "We couldn't download that photo. Try again.",
+    unavailable:
+      "Some photos couldn't be loaded. Refresh the page to try again.",
+  },
   auth: {
+    signOutFailed: "We couldn't sign you out. Try again.",
     rateLimited: "Too many attempts. Wait a minute and try again.",
     emailNotVerified:
       "Verify your email before signing in. Check your inbox for the link.",

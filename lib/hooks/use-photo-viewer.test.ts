@@ -5,6 +5,14 @@ import { scoreEntry, TEST_NOW } from "@/lib/__fixtures__/score-entry";
 
 import { usePhotoViewer } from "./use-photo-viewer";
 
+const { downloader } = vi.hoisted(() => ({
+  downloader: { pendingId: null as string | null, download: vi.fn() },
+}));
+
+vi.mock("@/lib/hooks/use-photo-download", () => ({
+  usePhotoDownload: () => downloader,
+}));
+
 const entries = [
   scoreEntry({
     id: "photo-1",
@@ -78,5 +86,31 @@ describe("usePhotoViewer", () => {
     expect(await result.current.dialog.onPhotoError()).toBe(true);
     expect(onPhotoError).toHaveBeenCalledWith("photo-1");
     expect(result.current.onPhotoError).toBe(onPhotoError);
+  });
+
+  it("downloads the open photo under its file name", () => {
+    const { result } = renderHook(() => usePhotoViewer(entries, OPTIONS));
+    result.current.dialog.onDownload();
+    expect(downloader.download).not.toHaveBeenCalled();
+
+    act(() => result.current.show("photo-1"));
+    result.current.dialog.onDownload();
+    expect(downloader.download).toHaveBeenCalledWith(
+      "photo-1",
+      "beach-day.jpg",
+    );
+  });
+
+  it("marks the dialog as downloading only for the open photo", () => {
+    downloader.pendingId = "photo-1";
+    const { result } = renderHook(() => usePhotoViewer(entries, OPTIONS));
+    expect(result.current.dialog.downloading).toBe(false);
+
+    act(() => result.current.show("photo-1"));
+    expect(result.current.dialog.downloading).toBe(true);
+
+    act(() => result.current.show("photo-2"));
+    expect(result.current.dialog.downloading).toBe(false);
+    downloader.pendingId = null;
   });
 });

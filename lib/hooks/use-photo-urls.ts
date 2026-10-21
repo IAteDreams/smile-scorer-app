@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { API } from "@/lib/constants/links";
+import { ERRORS } from "@/lib/error";
 import type { PhotoUrls, UploadInfo } from "@/types/photo";
 import type { ApiResponse } from "@/types/return";
 import type { ScoreEntry } from "@/types/score";
@@ -27,6 +29,9 @@ export function usePhotoUrls(entries: readonly ScoreEntry[]): PhotoUrls {
 
     const url = await fetchPhotoUrl(id);
     setRefreshed((current) => ({ ...current, [id]: url }));
+    if (url === null) {
+      toast.error(ERRORS.photo.unavailable, { id: "photo-unavailable" });
+    }
     return url !== null;
   };
 

@@ -4,6 +4,10 @@ import { scoreEntry } from "@/lib/__fixtures__/score-entry";
 
 import { usePhotoUrls } from "./use-photo-urls";
 
+const { toast } = vi.hoisted(() => ({ toast: { error: vi.fn() } }));
+
+vi.mock("sonner", () => ({ toast }));
+
 const entries = [
   scoreEntry({ id: "photo-1" }),
   scoreEntry({ id: "photo-2", daysAgo: 1 }),
@@ -14,6 +18,7 @@ const respond = (body: unknown) =>
 
 describe("usePhotoUrls", () => {
   beforeEach(() => {
+    toast.error.mockClear();
     vi.stubGlobal("fetch", vi.fn());
     vi.useFakeTimers({ toFake: ["Date"] });
   });
@@ -41,6 +46,7 @@ describe("usePhotoUrls", () => {
     expect(fetch).toHaveBeenCalledWith("/api/upload/photo-1");
     expect(result.current.entries[0].photoUrl).toBe("https://signed/new");
     expect(result.current.entries[1].photoUrl).toBe(entries[1].photoUrl);
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it("shows the placeholder when the photo is gone", async () => {
@@ -53,6 +59,10 @@ describe("usePhotoUrls", () => {
     });
     expect(ok).toBe(false);
     expect(result.current.entries[0].photoUrl).toBeNull();
+    expect(toast.error).toHaveBeenCalledWith(
+      "Some photos couldn't be loaded. Refresh the page to try again.",
+      { id: "photo-unavailable" },
+    );
   });
 
   it("treats a network failure like a missing photo", async () => {

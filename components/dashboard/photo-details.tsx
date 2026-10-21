@@ -1,5 +1,5 @@
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
-import { XIcon } from "lucide-react";
+import { Download, XIcon } from "lucide-react";
 import {
   ExpandedPhoto,
   thumbnailSelector,
@@ -19,6 +19,8 @@ export function PhotoDetails({
   onFlightStart,
   onClosed,
   onPhotoError,
+  downloading,
+  onDownload,
 }: PhotoViewerDialog) {
   const {
     phase,
@@ -169,13 +171,25 @@ export function PhotoDetails({
                   openness. Automated estimate, for fun only.
                 </p>
 
-                <DialogPrimitive.Close
-                  render={
-                    <Button size="lg" className="mt-auto w-full rounded-lg" />
-                  }
-                >
-                  Done
-                </DialogPrimitive.Close>
+                <div className="mt-auto flex gap-2">
+                  {photo.photoUrl && (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="flex-1 rounded-lg"
+                      disabled={downloading}
+                      onClick={onDownload}
+                    >
+                      <Download aria-hidden />
+                      {downloading ? "Downloading…" : "Download"}
+                    </Button>
+                  )}
+                  <DialogPrimitive.Close
+                    render={<Button size="lg" className="flex-1 rounded-lg" />}
+                  >
+                    Done
+                  </DialogPrimitive.Close>
+                </div>
               </div>
             </>
           )}

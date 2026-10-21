@@ -60,6 +60,12 @@ export type UploadInfo = {
 /** Fetches a new signed URL for a photo; resolves false if it could not. */
 export type PhotoUrlRefresh = (id: string) => Promise<boolean>;
 
+/** What `usePhotoDownload` returns: the photo being fetched and the action. */
+export type PhotoDownload = {
+  pendingId: string | null;
+  download: (id: string, fileName: string) => Promise<void>;
+};
+
 /** What `usePhotoUrls` returns: entries with refreshed URLs applied. */
 export type PhotoUrls = {
   entries: ScoreEntry[];
@@ -80,6 +86,8 @@ export type PhotoViewerDialog = {
   onFlightStart: () => void;
   onClosed: () => void;
   onPhotoError: () => Promise<boolean>;
+  downloading: boolean;
+  onDownload: () => void;
 };
 
 /** What `usePhotoViewer` returns: which photo is open and its dialog props. */
