@@ -27,6 +27,19 @@ describe("PrivacyPolicy", () => {
     });
   });
 
+  it("marks Privacy as the current legal page", () => {
+    render(<PrivacyPolicy />);
+    const tabs = screen.getByRole("navigation", { name: "Legal pages" });
+    expect(within(tabs).getByRole("link", { name: "Privacy" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(within(tabs).getByRole("link", { name: "Terms" })).toHaveAttribute(
+      "href",
+      "/terms",
+    );
+  });
+
   it("links every section from the table of contents", () => {
     render(<PrivacyPolicy />);
     const toc = screen.getByRole("navigation", { name: "On this page" });

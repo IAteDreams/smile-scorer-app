@@ -1,3 +1,10 @@
+import { LINKS } from "@/lib/constants/links";
+
+export const LEGAL_TABS = [
+  { label: "Privacy", href: LINKS.public.privacy },
+  { label: "Terms", href: LINKS.public.terms },
+] as const;
+
 export type LegalSection = {
   id: string;
   title: string;
@@ -53,6 +60,48 @@ export const PRIVACY_POLICY = {
       title: "Contact",
       paragraphs: [
         "Questions about your privacy, or a request about your data? Email privacy@smilescore.app.",
+      ],
+    },
+  ] satisfies readonly LegalSection[],
+} as const;
+
+export const TERMS_OF_SERVICE = {
+  effective: "October 21, 2026",
+  contactEmail: "legal@smilescore.app",
+  sections: [
+    {
+      id: "using-smilescore",
+      title: "Using Smilescore",
+      paragraphs: [
+        "You must be 16 or older to create an account. Keep your sign-in details private; you are responsible for activity on your account.",
+      ],
+    },
+    {
+      id: "your-photos",
+      title: "Your photos",
+      paragraphs: [
+        "You keep ownership of everything you upload. You give us permission to store and process your photos only to provide the service. Only upload photos you have the right to use.",
+      ],
+    },
+    {
+      id: "scores-are-for-fun",
+      title: "Scores are for fun",
+      paragraphs: [
+        "Smile scores are automated estimates from Amazon Rekognition. They are not a medical, psychological or professional assessment, and may be wrong.",
+      ],
+    },
+    {
+      id: "acceptable-use",
+      title: "Acceptable use",
+      paragraphs: [
+        "Don't upload photos of other people without their consent, photos of minors, or illegal content. We may remove content or suspend accounts that break these rules.",
+      ],
+    },
+    {
+      id: "ending-your-account",
+      title: "Ending your account",
+      paragraphs: [
+        "You can delete your account at any time from Settings. Your photos and scores are deleted within 30 days.",
       ],
     },
   ] satisfies readonly LegalSection[],
