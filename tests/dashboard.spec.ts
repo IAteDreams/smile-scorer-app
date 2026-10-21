@@ -132,6 +132,14 @@ test.describe("with a history", () => {
       dialog.getByRole("img", { name: "Photo beach-day.jpg" }),
     ).toBeVisible();
 
+    // Fits the screen sideways, and the actions can always be scrolled to.
+    expect(await dialog.evaluate((el) => el.scrollWidth - el.clientWidth)).toBe(
+      0,
+    );
+    const done = dialog.getByRole("button", { name: "Done" });
+    await done.scrollIntoViewIfNeeded();
+    await expect(done).toBeInViewport({ ratio: 1 });
+
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
   });

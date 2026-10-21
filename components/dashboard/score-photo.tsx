@@ -98,7 +98,7 @@ export function ExpandedPhoto({
         sizes="(min-width: 768px) 430px, 100vw"
         onLoad={(event) => onReady(event.currentTarget)}
         onError={onError}
-        className="h-auto max-h-[45dvh] w-auto max-w-full rounded-lg md:max-h-[70dvh]"
+        className="h-auto max-h-[45dvh] w-auto max-w-full rounded-lg md:max-h-[min(70dvh,calc(100dvh-6rem))]"
       />
       <FaceBox
         box={box}
