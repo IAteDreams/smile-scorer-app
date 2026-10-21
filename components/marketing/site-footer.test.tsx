@@ -16,4 +16,11 @@ describe("SiteFooter", () => {
     render(<SiteFooter />);
     expect(screen.getByText("© 2026 Smilescore")).toBeInTheDocument();
   });
+
+  it("lines up with the page it sits on", () => {
+    render(<SiteFooter className="sm:px-10" />);
+    const footer = screen.getByRole("contentinfo");
+    expect(footer).toHaveClass("sm:px-10");
+    expect(footer).not.toHaveClass("sm:px-14");
+  });
 });
