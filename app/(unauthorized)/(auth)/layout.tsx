@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/common/logo";
 import groupOfFriends from "@/public/group_of_friends.webp";
+import { LINKS } from "@/lib/constants";
 
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
@@ -15,11 +16,17 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
 
         <p className="text-xs text-muted-foreground">
           By continuing you agree to our
-          <Link href="/terms" className="underline underline-offset-2">
+          <Link
+            href={LINKS.public.terms}
+            className="underline underline-offset-2"
+          >
             Terms
           </Link>
           and
-          <Link href="/privacy" className="underline underline-offset-2">
+          <Link
+            href={LINKS.public.privacy}
+            className="underline underline-offset-2"
+          >
             Privacy Policy
           </Link>
           .

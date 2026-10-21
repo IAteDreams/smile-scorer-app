@@ -6,6 +6,7 @@ import { IconInput, PasswordInput } from "@/components/common/input";
 import { Button } from "@/components/ui/button";
 import type { signInSchema } from "@/lib/schemas/auth";
 import type { FormState } from "@/types/form";
+import { LINKS } from "@/lib/constants";
 
 type SignInFormProps = FormState<z.infer<typeof signInSchema>>;
 
@@ -65,7 +66,7 @@ export function SignInForm({
       <p className="text-center text-sm text-muted-foreground">
         No account?{" "}
         <Link
-          href="/sign-up"
+          href={LINKS.guest.signUp}
           className="text-foreground underline underline-offset-4"
         >
           Create one

@@ -1,7 +1,7 @@
 import { APIError } from "better-auth/api";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { HttpError } from "@/lib/error";
+import { ERRORS, HttpError } from "@/lib/error";
 import type {
   ApiOptions,
   HandlerArgs,
@@ -40,13 +40,13 @@ export const apiWrapper = <
       let body: unknown;
       if (schema) {
         const json = await req.json().catch(() => {
-          throw new HttpError(400, "Invalid JSON body");
+          throw new HttpError(400, ERRORS.http.invalidJson);
         });
 
         const parsed = schema.safeParse(json);
 
         if (!parsed.success) {
-          return fail(422, "Validation failed", {
+          return fail(422, ERRORS.http.validationFailed, {
             issues: z.flattenError(parsed.error).fieldErrors as Record<
               string,
               string[] | undefined
@@ -79,7 +79,7 @@ export const apiWrapper = <
       }
 
       console.error("[api]", req.method, req.nextUrl.pathname, error);
-      return fail(500, "Internal server error");
+      return fail(500, ERRORS.http.internal);
     }
   };
 };
