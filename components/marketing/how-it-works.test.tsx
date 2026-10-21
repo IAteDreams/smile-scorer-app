@@ -21,4 +21,9 @@ describe("HowItWorks", () => {
       expect(items[index]).toHaveTextContent(step.body);
     });
   });
+
+  it("states the same upload limit the API enforces", () => {
+    render(<HowItWorks />);
+    expect(screen.getByText(/JPG or PNG up to 4 MB/)).toBeInTheDocument();
+  });
 });

@@ -1,5 +1,7 @@
 import { ChartLine, ImageUp, ScanFace, type LucideIcon } from "lucide-react";
 import { LINKS } from "@/lib/constants/links";
+import { MAX_PHOTO_BYTES } from "@/lib/constants/scoring";
+import { formatBytes } from "@/lib/utils";
 
 export const MARKETING_NAV = [
   { label: "How it works", href: LINKS.public.howItWorks },
@@ -13,7 +15,7 @@ export const HOW_IT_WORKS_STEPS: readonly {
   {
     icon: ImageUp,
     title: "Upload a photo",
-    body: "Drop in a JPG or PNG up to 5 MB. Works best with one clear, well-lit face.",
+    body: `Drop in a JPG or PNG up to ${formatBytes(MAX_PHOTO_BYTES)}. Works best with one clear, well-lit face.`,
   },
   {
     icon: ScanFace,
