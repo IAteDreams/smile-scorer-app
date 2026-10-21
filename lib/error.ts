@@ -1,3 +1,6 @@
+import { MAX_PHOTO_BYTES } from "@/lib/constants/scoring";
+import { formatBytes } from "@/lib/utils";
+
 export const ERRORS = {
   validation: {
     nameRequired: "Enter your name",
@@ -7,7 +10,7 @@ export const ERRORS = {
     passwordTooLong: "Use 128 characters or fewer",
     photoRequired: "Choose a photo to upload",
     photoType: "Use a JPG or PNG photo",
-    photoTooLarge: "Use a photo under 4 MB",
+    photoTooLarge: `Use a photo under ${formatBytes(MAX_PHOTO_BYTES)}`,
   },
   score: {
     noFace: "We couldn't find a face. Try a clear, well-lit photo of one face.",

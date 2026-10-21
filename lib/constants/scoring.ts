@@ -1,4 +1,6 @@
-export const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
+import { megabytes } from "@/lib/utils";
+
+export const MAX_PHOTO_BYTES = megabytes(4);
 
 export const PHOTO_MIME_TYPES = ["image/jpeg", "image/png"] as const;
 
