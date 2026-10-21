@@ -1,6 +1,7 @@
 export const LINKS = {
   public: {
     home: "/",
+    howItWorks: "/#how-it-works",
     terms: "/terms",
     privacy: "/privacy",
   },

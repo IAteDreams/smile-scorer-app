@@ -6,7 +6,7 @@ import { IconInput, PasswordInput } from "@/components/common/input";
 import { Button } from "@/components/ui/button";
 import type { signUpSchema } from "@/lib/schemas/auth";
 import type { FormState } from "@/types/form";
-import { LINKS } from "@/lib/constants";
+import { LINKS } from "@/lib/constants/links";
 
 type SignUpFormProps = FormState<z.infer<typeof signUpSchema>>;
 

@@ -7,7 +7,7 @@ import { SignUpForm } from "@/components/auth/sign-up-form";
 import { signUp } from "@/lib/auth-client";
 import { useForm } from "@/lib/hooks/use-form";
 import { signUpSchema } from "@/lib/schemas/auth";
-import { LINKS } from "@/lib/constants";
+import { LINKS } from "@/lib/constants/links";
 
 export function SignUp() {
   const [sentTo, setSentTo] = useState<string | null>(null);

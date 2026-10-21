@@ -1,7 +1,7 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
-import { LINKS } from "@/lib/constants";
+import { LINKS } from "@/lib/constants/links";
 
 const protectedRoutes = Object.values(LINKS.protected);
 const guestRoutes = Object.values(LINKS.guest);

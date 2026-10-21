@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/common/logo";
 import groupOfFriends from "@/public/group_of_friends.webp";
-import { LINKS } from "@/lib/constants";
+import { LINKS } from "@/lib/constants/links";
 
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
