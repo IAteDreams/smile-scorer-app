@@ -1,6 +1,8 @@
 import { betterAuth, SecondaryStorage } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
 import { db } from "@/db";
+import * as schema from "@/db/schema";
 import { redis } from "@/lib/redis";
 import { resend } from "./resend";
 
@@ -33,6 +35,7 @@ const redisSecondaryStorage: SecondaryStorage = {
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
+    schema,
   }),
   emailAndPassword: {
     enabled: true,
@@ -68,4 +71,6 @@ export const auth = betterAuth({
     ipAddress: { ipAddressHeaders: ["x-forwarded-for", "cf-connecting-ip"] },
     useSecureCookies: process.env.NODE_ENV === "production",
   },
+  // Sets session cookies when auth.api is called from route handlers. Must stay last.
+  plugins: [nextCookies()],
 });
