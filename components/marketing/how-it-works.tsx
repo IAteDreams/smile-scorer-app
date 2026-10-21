@@ -1,4 +1,5 @@
 import { HOW_IT_WORKS_STEPS } from "@/lib/constants/marketing";
+import { Card } from "@/components/ui/card";
 
 export function HowItWorks() {
   return (
@@ -16,10 +17,7 @@ export function HowItWorks() {
         </h2>
         <ol className="grid gap-5 md:grid-cols-3">
           {HOW_IT_WORKS_STEPS.map(({ icon: Icon, title, body }) => (
-            <li
-              key={title}
-              className="flex flex-col gap-2.5 rounded-xl border bg-card p-6"
-            >
+            <Card as="li" key={title} className="gap-2.5 p-6">
               <span className="flex size-9 items-center justify-center rounded-lg bg-muted">
                 <Icon aria-hidden className="size-4.5" />
               </span>
@@ -29,7 +27,7 @@ export function HowItWorks() {
               <p className="text-sm leading-[1.55] text-muted-foreground">
                 {body}
               </p>
-            </li>
+            </Card>
           ))}
         </ol>
       </div>

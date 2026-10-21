@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/common/logo";
+import { Card } from "@/components/ui/card";
 import groupOfFriends from "@/public/group_of_friends.webp";
 import { LINKS } from "@/lib/constants/links";
 
@@ -15,14 +16,14 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
         </main>
 
         <p className="text-xs text-muted-foreground">
-          By continuing you agree to our
+          By continuing you agree to our{" "}
           <Link
             href={LINKS.public.terms}
             className="underline underline-offset-2"
           >
             Terms
-          </Link>
-          and
+          </Link>{" "}
+          and{" "}
           <Link
             href={LINKS.public.privacy}
             className="underline underline-offset-2"
@@ -42,7 +43,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
           sizes="50vw"
           className="object-cover object-[center_30%]"
         />
-        <figure className="relative max-w-85 rounded-xl border bg-card p-5">
+        <Card as="figure" className="relative block max-w-85 p-5">
           <blockquote className="text-[15px] leading-normal">
             “I didn&apos;t think my smile changed much. Then I saw a month of
             scores side by side.”
@@ -50,7 +51,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
           <figcaption className="mt-2.5 text-[13px] text-muted-foreground">
             Average score 81, up 9 in 30 days
           </figcaption>
-        </figure>
+        </Card>
       </aside>
     </div>
   );

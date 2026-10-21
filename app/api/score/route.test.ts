@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ERRORS, HttpError } from "@/lib/error";
 
-import { POST } from "./route";
+import { GET, POST } from "./route";
 
 const {
   verifySession,
@@ -12,6 +12,8 @@ const {
   uploadPhoto,
   removePhotos,
   saveScore,
+  listScores,
+  makeThumbnail,
 } = vi.hoisted(() => ({
   verifySession: vi.fn(),
   withinRateLimit: vi.fn(),
@@ -19,6 +21,8 @@ const {
   uploadPhoto: vi.fn(),
   removePhotos: vi.fn(),
   saveScore: vi.fn(),
+  listScores: vi.fn(),
+  makeThumbnail: vi.fn(),
 }));
 
 vi.mock("@/lib/dal/auth-checker", () => ({
@@ -29,10 +33,15 @@ vi.mock("@/lib/rate-limit", () => ({ withinRateLimit }));
 vi.mock("@/lib/rekognition", () => ({ analyzePhoto }));
 vi.mock("@/lib/storage", () => ({
   photoPath: (userId: string, id: string) => `${userId}/${id}`,
+  thumbnailPath: (path: string) => `${path}.thumb.webp`,
   uploadPhoto,
   removePhotos,
 }));
-vi.mock("@/lib/dal/score", () => ({ saveScore }));
+vi.mock("@/lib/thumbnail", () => ({
+  makeThumbnail,
+  THUMBNAIL_TYPE: "image/webp",
+}));
+vi.mock("@/lib/dal/score", () => ({ saveScore, listScores }));
 
 const RESULT = { score: 92, label: "Beaming" };
 
@@ -59,6 +68,7 @@ describe("POST /api/score", () => {
     uploadPhoto.mockResolvedValue(undefined);
     removePhotos.mockResolvedValue(undefined);
     saveScore.mockResolvedValue(undefined);
+    makeThumbnail.mockResolvedValue(new Uint8Array([9]));
   });
 
   it("scores a valid photo", async () => {
@@ -137,11 +147,40 @@ describe("POST /api/score", () => {
       id: data.id,
       userId: "user-1",
       path,
+      fileName: "smile.jpg",
       contentType: "image/jpeg",
       size: 10,
       result: RESULT,
     });
     expect(removePhotos).not.toHaveBeenCalled();
+  });
+
+  it("stores a small thumbnail next to the photo", async () => {
+    const { data } = await (await send(jpeg())).json();
+    expect(uploadPhoto).toHaveBeenCalledWith(
+      `user-1/${data.id}.thumb.webp`,
+      new Uint8Array([9]),
+      "image/webp",
+    );
+  });
+
+  it("still scores the photo when no thumbnail can be made", async () => {
+    makeThumbnail.mockResolvedValue(null);
+    const response = await send(jpeg());
+    expect(response.status).toBe(200);
+    expect(uploadPhoto).toHaveBeenCalledTimes(1);
+    expect(saveScore).toHaveBeenCalled();
+  });
+
+  it("still scores the photo when the thumbnail upload fails", async () => {
+    uploadPhoto
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("storage hiccup"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await send(jpeg());
+    expect(response.status).toBe(200);
+    expect(saveScore).toHaveBeenCalled();
   });
 
   it("does not save a score when the upload fails", async () => {
@@ -160,6 +199,60 @@ describe("POST /api/score", () => {
     const response = await send(jpeg());
     const [[path]] = uploadPhoto.mock.calls;
     expect(response.status).toBe(500);
-    expect(removePhotos).toHaveBeenCalledWith([path]);
+    expect(removePhotos).toHaveBeenCalledWith([path, `${path}.thumb.webp`]);
+  });
+});
+
+describe("GET /api/score", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    verifySession.mockResolvedValue({ user: { id: "user-1" } });
+  });
+
+  const get = (query = "") =>
+    GET(new NextRequest(`http://localhost/api/score${query}`));
+
+  it("returns the first page of the user's scores by default", async () => {
+    const page = { items: [{ id: "photo-1" }], total: 1, page: 0, pageSize: 6 };
+    listScores.mockResolvedValue(page);
+
+    const response = await get();
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ success: true, data: page });
+    expect(listScores).toHaveBeenCalledWith("user-1", {
+      query: "",
+      sort: "newest",
+      page: 0,
+    });
+  });
+
+  it("passes the search, sort and page through", async () => {
+    listScores.mockResolvedValue({ items: [], total: 0, page: 2, pageSize: 6 });
+    await get("?q=%20beach%20&sort=highest&page=2");
+    expect(listScores).toHaveBeenCalledWith("user-1", {
+      query: "beach",
+      sort: "highest",
+      page: 2,
+    });
+  });
+
+  it.each([
+    ["an unknown sort", "?sort=random"],
+    ["a negative page", "?page=-1"],
+    ["a page that is not a number", "?page=two"],
+    ["a very long search", `?q=${"a".repeat(101)}`],
+  ])("rejects %s", async (_, query) => {
+    const response = await get(query);
+    expect(response.status).toBe(422);
+    expect(listScores).not.toHaveBeenCalled();
+  });
+
+  it("requires a signed-in user", async () => {
+    verifySession.mockRejectedValue(
+      new HttpError(401, ERRORS.http.unauthorized),
+    );
+    const response = await get();
+    expect(response.status).toBe(401);
+    expect(listScores).not.toHaveBeenCalled();
   });
 });
