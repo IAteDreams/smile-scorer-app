@@ -3,22 +3,21 @@ import { SCORE_LABELS } from "@/lib/constants/scoring";
 import type { ScoreDetails } from "@/db/schema/score";
 import type { FaceAttribute, PhotoDetailsData } from "@/types/photo";
 import type {
+  ChartEntry,
   ChartPoint,
   ChartRange,
   HistoryRow,
-  HistorySort,
   ScoreEntry,
+  ScoreLabel,
+  ScoreSummary,
+  ScoreTotals,
   StatSummary,
+  Streak,
 } from "@/types/score";
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
-const time = (entry: ScoreEntry) => Date.parse(entry.uploadedAt);
-
-const average = (scores: number[]) =>
-  scores.length === 0
-    ? null
-    : Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+const time = (entry: { uploadedAt: string }) => Date.parse(entry.uploadedAt);
 
 export function dayKey(date: Date | number, timeZone: string) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -30,11 +29,13 @@ export function dayKey(date: Date | number, timeZone: string) {
 }
 
 export function getStreak(
-  entries: readonly ScoreEntry[],
+  uploadTimes: readonly string[],
   now: number,
   timeZone: string,
-) {
-  const days = new Set(entries.map((entry) => dayKey(time(entry), timeZone)));
+): Streak {
+  const days = new Set(
+    uploadTimes.map((iso) => dayKey(Date.parse(iso), timeZone)),
+  );
   const scoredToday = days.has(dayKey(now, timeZone));
 
   let cursor = scoredToday ? now : now - DAY_MS;
@@ -46,56 +47,31 @@ export function getStreak(
   return { days: length, scoredToday };
 }
 
-export function getStats(
-  entries: readonly ScoreEntry[],
-  now: number,
-  timeZone: string,
-) {
-  const scoresBetween = (fromDays: number, toDays: number) =>
-    entries
-      .filter((entry) => {
-        const t = time(entry);
-        return t > now - fromDays * DAY_MS && t <= now - toDays * DAY_MS;
-      })
-      .map((entry) => entry.score);
-
-  const recent = average(scoresBetween(30, 0));
-  const previous = average(scoresBetween(60, 30));
-
-  return {
-    count: entries.length,
-    average: average(entries.map((entry) => entry.score)),
-    averageChange:
-      recent !== null && previous !== null ? recent - previous : null,
-    best: entries.reduce<ScoreEntry | null>(
-      (top, entry) => (!top || entry.score > top.score ? entry : top),
-      null,
-    ),
-    thisWeek: scoresBetween(7, 0).length,
-    streak: getStreak(entries, now, timeZone),
-  };
-}
-
-export type DashboardStats = ReturnType<typeof getStats>;
-
 export function toStatSummary(
-  stats: DashboardStats,
+  summary: ScoreSummary,
   now: number,
   timeZone: string,
 ): StatSummary {
-  const { best, ...rest } = stats;
+  const { best, recentAverage, previousAverage } = summary;
   return {
-    ...rest,
+    average: summary.average,
+    averageChange:
+      recentAverage !== null && previousAverage !== null
+        ? recentAverage - previousAverage
+        : null,
     best: best && {
       score: best.score,
       fileName: best.fileName,
       day: formatDay(best.uploadedAt, now, timeZone),
     },
+    count: summary.count,
+    thisWeek: summary.thisWeek,
+    streak: getStreak(summary.uploadTimes, now, timeZone),
   };
 }
 
 export function getChartEntries(
-  entries: readonly ScoreEntry[],
+  entries: readonly ChartEntry[],
   range: ChartRange,
   now: number,
 ) {
@@ -107,34 +83,16 @@ export function getChartEntries(
   return sorted;
 }
 
-export function getBreakdown(entries: readonly ScoreEntry[]) {
+export function getBreakdown(bands: Record<ScoreLabel, number>) {
   return SCORE_LABELS.map((band, index) => ({
     label: band.label,
     min: band.min,
     max: index === 0 ? 100 : SCORE_LABELS[index - 1].min - 1,
-    count: entries.filter((entry) => entry.label === band.label).length,
+    count: bands[band.label],
   }));
 }
 
 export type ScoreBand = ReturnType<typeof getBreakdown>[number];
-
-const SORTERS: Record<HistorySort, (a: ScoreEntry, b: ScoreEntry) => number> = {
-  newest: (a, b) => time(b) - time(a),
-  oldest: (a, b) => time(a) - time(b),
-  highest: (a, b) => b.score - a.score || time(b) - time(a),
-  lowest: (a, b) => a.score - b.score || time(b) - time(a),
-};
-
-export function getHistory(
-  entries: readonly ScoreEntry[],
-  { query, sort }: { query: string; sort: HistorySort },
-) {
-  const search = query.trim().toLowerCase();
-  const matches = search
-    ? entries.filter((entry) => entry.fileName.toLowerCase().includes(search))
-    : entries;
-  return [...matches].sort(SORTERS[sort]);
-}
 
 export function greeting(now: number, timeZone: string) {
   const hour = Number(
@@ -184,23 +142,25 @@ export const formatPercent = (value: number | null) =>
 const ORDINALS = ["", "best", "second-best", "third-best"];
 
 export function describeScore(
-  entry: ScoreEntry,
-  entries: readonly ScoreEntry[],
+  entry: Pick<ScoreEntry, "score" | "rank">,
+  { average, count }: ScoreTotals,
 ) {
-  if (entries.length < 2) return "Your first score. Upload more to compare.";
+  if (count < 2 || average === null) {
+    return "Your first score. Upload more to compare.";
+  }
 
-  const diff = entry.score - average(entries.map((other) => other.score))!;
+  const diff = entry.score - average;
   const points = `${Math.abs(diff)} ${Math.abs(diff) === 1 ? "point" : "points"}`;
   const versusAverage =
     diff === 0
       ? "Right on your average."
       : `${points} ${diff > 0 ? "above" : "below"} your average.`;
 
-  const rank = entries.filter((other) => other.score > entry.score).length + 1;
+  const { rank } = entry;
   const ranking =
     rank < ORDINALS.length
       ? `Your ${ORDINALS[rank]} score so far.`
-      : `Ranked ${rank} of ${entries.length}.`;
+      : `Ranked ${rank} of ${count}.`;
 
   return `${versusAverage} ${ranking}`;
 }
@@ -245,7 +205,7 @@ export function faceAttributes(details: ScoreDetails): FaceAttribute[] {
 
 export function toPhotoDetails(
   entry: ScoreEntry,
-  entries: readonly ScoreEntry[],
+  totals: ScoreTotals,
   now: number,
   timeZone: string,
 ): PhotoDetailsData {
@@ -256,7 +216,7 @@ export function toPhotoDetails(
     photoUrl: entry.photoUrl,
     score: entry.score,
     label: entry.label,
-    comparison: describeScore(entry, entries),
+    comparison: describeScore(entry, totals),
     faceCount: entry.faceCount,
     faceConfidence: formatPercent(entry.details.faceConfidence),
     boundingBox: entry.details.boundingBox,
@@ -265,7 +225,7 @@ export function toPhotoDetails(
 }
 
 export function toChartPoint(
-  entry: ScoreEntry,
+  entry: ChartEntry,
   now: number,
   timeZone: string,
 ): ChartPoint {
@@ -287,6 +247,7 @@ export function toHistoryRow(
     id: entry.id,
     fileName: entry.fileName,
     photoUrl: entry.photoUrl,
+    thumbnailUrl: entry.thumbnailUrl,
     uploaded: formatUploadedAt(entry.uploadedAt, now, timeZone),
     score: entry.score,
     emotion: formatEmotion(entry.details.topEmotion?.type ?? null),

@@ -11,6 +11,7 @@ const setup = (overrides: Partial<ComponentProps<typeof HistoryBody>> = {}) => {
         id: "1",
         fileName: "beach-day.jpg",
         photoUrl: "/group_of_friends.webp",
+        thumbnailUrl: "/group_of_friends.thumb.webp",
         uploaded: "Today, 2:14 PM",
         score: 92,
         emotion: "Happy",

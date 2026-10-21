@@ -1,6 +1,7 @@
 import { ScoreBar } from "@/components/common/score-bar";
 import { PhotoThumbnail } from "@/components/dashboard/score-photo";
 import { HISTORY_COLUMNS } from "@/lib/constants/dashboard";
+import { cn } from "@/lib/utils";
 import type { PhotoPicker } from "@/types/photo";
 import type { HistoryRow } from "@/types/score";
 
@@ -8,13 +9,24 @@ type HistoryBodyProps = {
   rows: HistoryRow[];
   query: string;
   picker: PhotoPicker;
+  loading?: boolean;
 };
 
-export function HistoryBody({ rows, query, picker }: HistoryBodyProps) {
+export function HistoryBody({
+  rows,
+  query,
+  picker,
+  loading = false,
+}: HistoryBodyProps) {
   const search = query.trim();
 
   return (
-    <div className="overflow-x-auto">
+    <div
+      className={cn(
+        "overflow-x-auto transition-opacity",
+        loading && "opacity-60",
+      )}
+    >
       <table className="w-full min-w-170 text-sm">
         <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
           <tr className="border-b">
@@ -57,6 +69,7 @@ export function HistoryBody({ rows, query, picker }: HistoryBodyProps) {
                     <PhotoThumbnail
                       id={row.id}
                       photoUrl={row.photoUrl}
+                      thumbnailUrl={row.thumbnailUrl}
                       hidden={row.id === picker.hiddenId}
                       onError={() => void picker.onPhotoError(row.id)}
                     />

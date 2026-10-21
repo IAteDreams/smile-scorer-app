@@ -8,18 +8,24 @@ import type { ScoreEntry } from "@/types/score";
 
 const RETRY_AFTER_MS = 60_000;
 
-async function fetchPhotoUrl(id: string) {
+type FreshUrls = Pick<ScoreEntry, "photoUrl" | "thumbnailUrl">;
+
+const MISSING: FreshUrls = { photoUrl: null, thumbnailUrl: null };
+
+async function fetchPhotoUrls(id: string): Promise<FreshUrls | null> {
   try {
     const response = await fetch(API.upload(id));
     const body = (await response.json()) as ApiResponse<UploadInfo>;
-    return body.success ? body.data.url : null;
+    return body.success
+      ? { photoUrl: body.data.url, thumbnailUrl: body.data.thumbnailUrl }
+      : null;
   } catch {
     return null;
   }
 }
 
 export function usePhotoUrls(entries: readonly ScoreEntry[]): PhotoUrls {
-  const [refreshed, setRefreshed] = useState<Record<string, string | null>>({});
+  const [refreshed, setRefreshed] = useState<Record<string, FreshUrls>>({});
   const lastTried = useRef(new Map<string, number>());
 
   const refresh = async (id: string) => {
@@ -27,19 +33,17 @@ export function usePhotoUrls(entries: readonly ScoreEntry[]): PhotoUrls {
     if (last !== undefined && Date.now() - last < RETRY_AFTER_MS) return false;
     lastTried.current.set(id, Date.now());
 
-    const url = await fetchPhotoUrl(id);
-    setRefreshed((current) => ({ ...current, [id]: url }));
-    if (url === null) {
+    const urls = await fetchPhotoUrls(id);
+    setRefreshed((current) => ({ ...current, [id]: urls ?? MISSING }));
+    if (urls === null) {
       toast.error(ERRORS.photo.unavailable, { id: "photo-unavailable" });
     }
-    return url !== null;
+    return urls !== null;
   };
 
   return {
     entries: entries.map((entry) =>
-      entry.id in refreshed
-        ? { ...entry, photoUrl: refreshed[entry.id] }
-        : entry,
+      entry.id in refreshed ? { ...entry, ...refreshed[entry.id] } : entry,
     ),
     refresh,
   };

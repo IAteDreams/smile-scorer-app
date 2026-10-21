@@ -1,5 +1,13 @@
 export const RECENT_UPLOADS = 14;
 
+export const CHART_LIMIT = 100;
+
+export const STREAK_WINDOW_DAYS = 120;
+
+export const SEARCH_DEBOUNCE_MS = 250;
+
+export const MAX_SEARCH_LENGTH = 100;
+
 export const CHART_RANGES = [
   {
     value: "recent",

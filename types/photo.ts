@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import type { ScoreEntry } from "@/types/score";
+import type { ScoreEntry, ScoreTotals } from "@/types/score";
 
 export type Rect = { left: number; top: number; width: number; height: number };
 
@@ -55,6 +55,7 @@ export type UploadInfo = {
   size: number;
   uploadedAt: string;
   url: string;
+  thumbnailUrl: string | null;
 };
 
 /** Fetches a new signed URL for a photo; resolves false if it could not. */
@@ -75,6 +76,7 @@ export type PhotoUrls = {
 export type PhotoViewerOptions = {
   now: number;
   timeZone: string;
+  totals: ScoreTotals;
   onPhotoError?: PhotoUrlRefresh;
 };
 

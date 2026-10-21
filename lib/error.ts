@@ -18,6 +18,9 @@ export const ERRORS = {
     busy: "Scoring is busy right now. Try again in a moment.",
     rateLimited: "You've scored a lot of photos. Wait a minute and try again.",
   },
+  history: {
+    loadFailed: "We couldn't load your history. Try again.",
+  },
   photo: {
     downloadFailed: "We couldn't download that photo. Try again.",
     unavailable:

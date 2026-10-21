@@ -4,9 +4,15 @@ import { apiWrapper } from "@/lib/dal/api";
 import { verifyAuth } from "@/lib/dal/auth-checker";
 import { getUpload } from "@/lib/dal/score";
 import { ERRORS, HttpError } from "@/lib/error";
-import { getPhotoUrl } from "@/lib/storage";
+import { getPhotoUrl, getPhotoUrls, thumbnailPath } from "@/lib/storage";
 import type { HandlerArgs } from "@/types/handler";
 import type { UploadInfo } from "@/types/photo";
+
+async function thumbnailUrl(path: string) {
+  const thumbnail = thumbnailPath(path);
+  const urls = await getPhotoUrls([thumbnail]).catch(() => null);
+  return urls?.get(thumbnail) ?? null;
+}
 
 export const GET = apiWrapper(
   ({ req, params }: HandlerArgs<undefined, { id: string }>) =>
@@ -27,6 +33,7 @@ export const GET = apiWrapper(
         url: await getPhotoUrl(found.path, {
           download: download ? fileName : undefined,
         }),
+        thumbnailUrl: await thumbnailUrl(found.path),
       };
     }),
 );

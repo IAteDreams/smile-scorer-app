@@ -4,7 +4,7 @@ export const FLIGHT_IN_MS = 350;
 export const FLIGHT_OUT_MS = 250;
 export const FLIGHT_EASING = "cubic-bezier(0.2, 0, 0, 1)";
 
-const THUMBNAIL_FOCUS_Y = 0.4;
+const THUMBNAIL_FOCUS_Y = 0.5;
 const RADIUS = 8;
 
 export function flightKeyframes(from: Rect, to: Rect): Keyframe[] {

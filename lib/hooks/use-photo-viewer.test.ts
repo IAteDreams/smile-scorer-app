@@ -22,7 +22,11 @@ const entries = [
   }),
   scoreEntry({ id: "photo-2", daysAgo: 1, score: 81 }),
 ];
-const OPTIONS = { now: TEST_NOW, timeZone: "UTC" };
+const OPTIONS = {
+  now: TEST_NOW,
+  timeZone: "UTC",
+  totals: { average: 80, count: 2 },
+};
 
 describe("usePhotoViewer", () => {
   it("starts with nothing open", () => {

@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CHART_RANGES } from "@/lib/constants/dashboard";
+import { CHART_LIMIT, CHART_RANGES } from "@/lib/constants/dashboard";
 import { cn } from "@/lib/utils";
 import type { ChartPoint, ChartRange } from "@/types/score";
 
@@ -13,12 +13,20 @@ type ScoreChartProps = {
   points: ChartPoint[];
   range: ChartRange;
   onRangeChange: (range: ChartRange) => void;
+  /** True when "All" only covers the most recent uploads. */
+  capped?: boolean;
 };
 
-export function ScoreChart({ points, range, onRangeChange }: ScoreChartProps) {
-  const description = CHART_RANGES.find(
-    (option) => option.value === range,
-  )?.description;
+export function ScoreChart({
+  points,
+  range,
+  onRangeChange,
+  capped = false,
+}: ScoreChartProps) {
+  const description =
+    range === "all" && capped
+      ? `Last ${CHART_LIMIT} uploads`
+      : CHART_RANGES.find((option) => option.value === range)?.description;
 
   return (
     <Card

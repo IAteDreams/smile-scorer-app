@@ -15,6 +15,16 @@ export const LINKS = {
 } as const;
 
 export const API = {
+  scores: ({
+    query,
+    sort,
+    page,
+  }: {
+    query: string;
+    sort: string;
+    page: number;
+  }) =>
+    `/api/score?${new URLSearchParams({ q: query, sort, page: String(page) })}`,
   upload: (id: string, { download = false } = {}) =>
     `/api/upload/${id}${download ? "?download=1" : ""}`,
 } as const;

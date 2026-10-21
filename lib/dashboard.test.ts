@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ScoreDetails } from "@/db/schema/score";
-import type { ScoreEntry } from "@/types/score";
+import type { ScoreEntry, ScoreSummary } from "@/types/score";
 
 import {
   DAY_MS,
@@ -14,8 +14,6 @@ import {
   formatUploadedAt,
   getBreakdown,
   getChartEntries,
-  getHistory,
-  getStats,
   getStreak,
   greeting,
   initials,
@@ -46,13 +44,29 @@ const entry = (overrides: Partial<ScoreEntry> & { daysAgo?: number } = {}) => {
     fileName: `photo-${nextId}.jpg`,
     uploadedAt: new Date(NOW - daysAgo * DAY_MS).toISOString(),
     photoUrl: null,
+    thumbnailUrl: null,
     score: 70,
     label: "Smiling",
+    rank: 1,
     faceCount: 1,
     details: DETAILS,
     ...rest,
   } satisfies ScoreEntry;
 };
+
+const summary = (overrides: Partial<ScoreSummary> = {}): ScoreSummary => ({
+  count: 0,
+  average: null,
+  recentAverage: null,
+  previousAverage: null,
+  thisWeek: 0,
+  best: null,
+  latest: null,
+  bands: { Beaming: 0, Smiling: 0, "Slight smile": 0, Neutral: 0 },
+  recent: [],
+  uploadTimes: [],
+  ...overrides,
+});
 
 describe("dayKey", () => {
   it("uses the calendar day in the given time zone", () => {
@@ -63,72 +77,37 @@ describe("dayKey", () => {
 });
 
 describe("getStreak", () => {
+  const daysAgo = (...days: number[]) =>
+    days.map((day) => new Date(NOW - day * DAY_MS).toISOString());
+
   it("counts consecutive days ending today", () => {
-    const entries = [0, 0, 1, 2, 4].map((daysAgo) => entry({ daysAgo }));
-    expect(getStreak(entries, NOW, "UTC")).toEqual({
+    expect(getStreak(daysAgo(0, 0, 1, 2, 4), NOW, "UTC")).toEqual({
       days: 3,
       scoredToday: true,
     });
   });
 
   it("keeps a streak alive until the day is over", () => {
-    const entries = [1, 2].map((daysAgo) => entry({ daysAgo }));
-    expect(getStreak(entries, NOW, "UTC")).toEqual({
+    expect(getStreak(daysAgo(1, 2), NOW, "UTC")).toEqual({
       days: 2,
       scoredToday: false,
     });
   });
 
   it("is zero after a missed day", () => {
-    expect(getStreak([entry({ daysAgo: 2 })], NOW, "UTC").days).toBe(0);
+    expect(getStreak(daysAgo(2), NOW, "UTC").days).toBe(0);
     expect(getStreak([], NOW, "UTC").days).toBe(0);
   });
 
   it("follows the viewer's time zone", () => {
-    const earlyManilaMorning = entry({ uploadedAt: "2026-10-20T20:00:00Z" });
-    expect(getStreak([earlyManilaMorning], NOW, "Asia/Manila")).toEqual({
+    const earlyManilaMorning = ["2026-10-20T20:00:00Z"];
+    expect(getStreak(earlyManilaMorning, NOW, "Asia/Manila")).toEqual({
       days: 1,
       scoredToday: true,
     });
-    expect(getStreak([earlyManilaMorning], NOW, "UTC")).toEqual({
+    expect(getStreak(earlyManilaMorning, NOW, "UTC")).toEqual({
       days: 1,
       scoredToday: false,
-    });
-  });
-});
-
-describe("getStats", () => {
-  it("summarizes the photos", () => {
-    const best = entry({ daysAgo: 40, score: 96, label: "Beaming" });
-    const entries = [
-      entry({ daysAgo: 0, score: 81 }),
-      entry({ daysAgo: 3, score: 90 }),
-      entry({ daysAgo: 10, score: 70 }),
-      best,
-      entry({ daysAgo: 45, score: 50 }),
-    ];
-
-    const stats = getStats(entries, NOW, "UTC");
-    expect(stats.count).toBe(5);
-    expect(stats.average).toBe(77);
-    expect(stats.averageChange).toBe(7);
-    expect(stats.best).toBe(best);
-    expect(stats.thisWeek).toBe(2);
-    expect(stats.streak).toEqual({ days: 1, scoredToday: true });
-  });
-
-  it("has no change without photos in both 30-day windows", () => {
-    expect(getStats([entry()], NOW, "UTC").averageChange).toBeNull();
-  });
-
-  it("handles a new account", () => {
-    expect(getStats([], NOW, "UTC")).toEqual({
-      count: 0,
-      average: null,
-      averageChange: null,
-      best: null,
-      thisWeek: 0,
-      streak: { days: 0, scoredToday: false },
     });
   });
 });
@@ -158,45 +137,15 @@ describe("getChartEntries", () => {
 });
 
 describe("getBreakdown", () => {
-  it("counts photos in each score band", () => {
-    const entries = [
-      entry({ label: "Beaming" }),
-      entry({ label: "Beaming" }),
-      entry({ label: "Neutral" }),
-    ];
-    expect(getBreakdown(entries)).toEqual([
+  it("lists every score band with its range and count", () => {
+    expect(
+      getBreakdown({ Beaming: 2, Smiling: 0, "Slight smile": 0, Neutral: 1 }),
+    ).toEqual([
       { label: "Beaming", min: 85, max: 100, count: 2 },
       { label: "Smiling", min: 60, max: 84, count: 0 },
       { label: "Slight smile", min: 30, max: 59, count: 0 },
       { label: "Neutral", min: 0, max: 29, count: 1 },
     ]);
-  });
-});
-
-describe("getHistory", () => {
-  const beach = entry({ fileName: "Beach-Day.jpg", daysAgo: 0, score: 60 });
-  const office = entry({ fileName: "office.jpg", daysAgo: 2, score: 90 });
-  const party = entry({ fileName: "party.png", daysAgo: 1, score: 60 });
-  const entries = [office, beach, party];
-
-  it("searches file names, ignoring case and spaces", () => {
-    expect(getHistory(entries, { query: "  beach ", sort: "newest" })).toEqual([
-      beach,
-    ]);
-  });
-
-  it.each([
-    ["newest", [beach, party, office]],
-    ["oldest", [office, party, beach]],
-    ["highest", [office, beach, party]],
-    ["lowest", [beach, party, office]],
-  ] as const)("sorts by %s", (sort, expected) => {
-    expect(getHistory(entries, { query: "", sort })).toEqual(expected);
-  });
-
-  it("does not change the original list", () => {
-    getHistory(entries, { query: "", sort: "newest" });
-    expect(entries).toEqual([office, beach, party]);
   });
 });
 
@@ -255,35 +204,36 @@ describe("formatters", () => {
 });
 
 describe("describeScore", () => {
-  const scores = [92, 81, 70, 50].map((score) => entry({ score }));
+  const totals = { average: 73, count: 4 };
 
-  it("compares a photo with the user's average and best", () => {
-    expect(describeScore(scores[0], scores)).toBe(
+  it("compares a photo with the user's average and rank", () => {
+    expect(describeScore({ score: 92, rank: 1 }, totals)).toBe(
       "19 points above your average. Your best score so far.",
     );
-    expect(describeScore(scores[1], scores)).toBe(
+    expect(describeScore({ score: 81, rank: 2 }, totals)).toBe(
       "8 points above your average. Your second-best score so far.",
     );
-    expect(describeScore(scores[3], scores)).toBe(
+    expect(describeScore({ score: 50, rank: 4 }, totals)).toBe(
       "23 points below your average. Ranked 4 of 4.",
     );
   });
 
   it("handles one point and the exact average", () => {
-    const pair = [entry({ score: 61 }), entry({ score: 59 })];
-    expect(describeScore(pair[0], pair)).toBe(
-      "1 point above your average. Your best score so far.",
-    );
-    const even = [entry({ score: 60 }), entry({ score: 60 })];
-    expect(describeScore(even[0], even)).toBe(
-      "Right on your average. Your best score so far.",
-    );
+    expect(
+      describeScore({ score: 61, rank: 1 }, { average: 60, count: 2 }),
+    ).toBe("1 point above your average. Your best score so far.");
+    expect(
+      describeScore({ score: 60, rank: 1 }, { average: 60, count: 2 }),
+    ).toBe("Right on your average. Your best score so far.");
   });
 
   it("has nothing to compare for the first photo", () => {
-    expect(describeScore(scores[0], [scores[0]])).toBe(
-      "Your first score. Upload more to compare.",
-    );
+    expect(
+      describeScore({ score: 92, rank: 1 }, { average: 92, count: 1 }),
+    ).toBe("Your first score. Upload more to compare.");
+    expect(
+      describeScore({ score: 92, rank: 1 }, { average: null, count: 0 }),
+    ).toBe("Your first score. Upload more to compare.");
   });
 });
 
@@ -309,25 +259,47 @@ describe("faceAttributes", () => {
 });
 
 describe("toStatSummary", () => {
-  it("formats the best photo's day and keeps the rest", () => {
+  it("turns the database totals into the stat cards", () => {
     const best = entry({ fileName: "sunset.jpg", score: 96, daysAgo: 23 });
-    const summary = toStatSummary(
-      getStats([entry({ score: 70 }), best], NOW, "UTC"),
-      NOW,
-      "UTC",
-    );
-    expect(summary).toEqual({
-      average: 83,
-      averageChange: null,
+    expect(
+      toStatSummary(
+        summary({
+          count: 5,
+          average: 77,
+          recentAverage: 80,
+          previousAverage: 73,
+          thisWeek: 2,
+          best,
+          uploadTimes: [new Date(NOW).toISOString()],
+        }),
+        NOW,
+        "UTC",
+      ),
+    ).toEqual({
+      average: 77,
+      averageChange: 7,
       best: { score: 96, fileName: "sunset.jpg", day: "Sep 28" },
-      count: 2,
-      thisWeek: 1,
+      count: 5,
+      thisWeek: 2,
       streak: { days: 1, scoredToday: true },
     });
   });
 
-  it("has no best photo without photos", () => {
-    expect(toStatSummary(getStats([], NOW, "UTC"), NOW, "UTC").best).toBeNull();
+  it("has no change without scores in both 30-day windows", () => {
+    expect(
+      toStatSummary(summary({ recentAverage: 80 }), NOW, "UTC").averageChange,
+    ).toBeNull();
+  });
+
+  it("handles a new account", () => {
+    expect(toStatSummary(summary(), NOW, "UTC")).toEqual({
+      average: null,
+      averageChange: null,
+      best: null,
+      count: 0,
+      thisWeek: 0,
+      streak: { days: 0, scoredToday: false },
+    });
   });
 });
 
@@ -338,6 +310,7 @@ describe("toHistoryRow", () => {
       id: photo.id,
       fileName: "beach.jpg",
       photoUrl: null,
+      thumbnailUrl: null,
       uploaded: expect.stringMatching(/^Today, 2:14\sPM$/),
       score: 92,
       emotion: "Happy",
@@ -370,8 +343,8 @@ describe("toChartPoint", () => {
 describe("toPhotoDetails", () => {
   it("prepares everything the photo dialog shows", () => {
     const photo = entry({ fileName: "beach.jpg", score: 92, label: "Beaming" });
-    const others = [photo, entry({ score: 60 })];
-    expect(toPhotoDetails(photo, others, NOW, "UTC")).toEqual({
+    const totals = { average: 76, count: 2 };
+    expect(toPhotoDetails(photo, totals, NOW, "UTC")).toEqual({
       id: photo.id,
       fileName: "beach.jpg",
       uploaded: expect.stringMatching(/^Today, /),

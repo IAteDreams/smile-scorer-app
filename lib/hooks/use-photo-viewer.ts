@@ -6,7 +6,12 @@ import type { ScoreEntry } from "@/types/score";
 
 export function usePhotoViewer(
   entries: readonly ScoreEntry[],
-  { now, timeZone, onPhotoError = async () => false }: PhotoViewerOptions,
+  {
+    now,
+    timeZone,
+    totals,
+    onPhotoError = async () => false,
+  }: PhotoViewerOptions,
 ): PhotoViewer {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -24,8 +29,8 @@ export function usePhotoViewer(
     },
     onPhotoError,
     dialog: {
-      photo: selected ? toPhotoDetails(selected, entries, now, timeZone) : null,
-      open,
+      photo: selected ? toPhotoDetails(selected, totals, now, timeZone) : null,
+      open: open && selected !== undefined,
       onOpenChange: (next: boolean) => {
         setOpen(next);
         if (!next) setFlying(false);

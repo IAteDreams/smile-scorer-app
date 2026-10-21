@@ -15,8 +15,8 @@ describe("flightKeyframes", () => {
     const [from, to] = flightKeyframes(thumbnail, photo);
     expect(from).toEqual({
       transformOrigin: "0 0",
-      transform: "translate(-100px, 391.2px) scale(0.11)",
-      clipPath: "inset(80px 0px 120px 0px round 72.72727272727273px)",
+      transform: "translate(-100px, 389px) scale(0.11)",
+      clipPath: "inset(100px 0px 100px 0px round 72.72727272727273px)",
     });
     expect(to).toEqual({
       transformOrigin: "0 0",

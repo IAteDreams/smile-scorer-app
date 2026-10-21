@@ -7,45 +7,47 @@ import { PhotoDetails } from "@/components/dashboard/photo-details";
 import { ScoreBreakdown } from "@/components/dashboard/score-breakdown";
 import { ScoreChart } from "@/components/dashboard/score-chart";
 import { StatCards } from "@/components/dashboard/stat-cards";
+import { CHART_LIMIT } from "@/lib/constants/dashboard";
 import {
   firstName,
   getBreakdown,
   getChartEntries,
-  getHistory,
-  getStats,
   greeting,
   toChartPoint,
   toStatSummary,
 } from "@/lib/dashboard";
 import { useHistory } from "@/lib/hooks/use-history";
-import { usePhotoUrls } from "@/lib/hooks/use-photo-urls";
 import { usePhotoViewer } from "@/lib/hooks/use-photo-viewer";
 import { useTimeZone } from "@/lib/hooks/use-time-zone";
-import type { ChartRange, ScoreEntry } from "@/types/score";
+import type { ChartRange, ScorePage, ScoreSummary } from "@/types/score";
 
 type DashboardViewProps = {
   name: string;
   now: number;
-  entries: ScoreEntry[];
+  summary: ScoreSummary;
+  history: ScorePage;
 };
 
-export function DashboardView({ name, now, entries }: DashboardViewProps) {
+export function DashboardView({
+  name,
+  now,
+  summary,
+  history: firstPage,
+}: DashboardViewProps) {
   const timeZone = useTimeZone();
   const [range, setRange] = useState<ChartRange>("recent");
 
-  const stats = getStats(entries, now, timeZone);
-  const statSummary = toStatSummary(stats, now, timeZone);
-  const chartPoints = getChartEntries(entries, range, now).map((entry) =>
+  const statSummary = toStatSummary(summary, now, timeZone);
+  const chartPoints = getChartEntries(summary.recent, range, now).map((entry) =>
     toChartPoint(entry, now, timeZone),
   );
-  const latest = getHistory(entries, { query: "", sort: "newest" })[0];
 
-  const photos = usePhotoUrls(entries);
-  const history = useHistory(photos.entries, { now, timeZone });
-  const viewer = usePhotoViewer(photos.entries, {
+  const history = useHistory(firstPage, { now, timeZone });
+  const viewer = usePhotoViewer(history.pagination.items, {
     now,
     timeZone,
-    onPhotoError: photos.refresh,
+    totals: summary,
+    onPhotoError: history.refreshPhoto,
   });
 
   return (
@@ -53,8 +55,8 @@ export function DashboardView({ name, now, entries }: DashboardViewProps) {
       <DashboardIntro
         title={`${greeting(now, timeZone)}, ${firstName(name)}`}
         summary={
-          latest
-            ? `You've scored ${stats.count} ${stats.count === 1 ? "photo" : "photos"}. Your last smile was a ${latest.score}.`
+          summary.latest
+            ? `You've scored ${summary.count} ${summary.count === 1 ? "photo" : "photos"}. Your last smile was a ${summary.latest.score}.`
             : "Upload a photo to get your first smile score."
         }
       />
@@ -65,9 +67,13 @@ export function DashboardView({ name, now, entries }: DashboardViewProps) {
             range={range}
             onRangeChange={setRange}
             points={chartPoints}
+            capped={summary.count > CHART_LIMIT}
           />
         </div>
-        <ScoreBreakdown bands={getBreakdown(entries)} total={entries.length} />
+        <ScoreBreakdown
+          bands={getBreakdown(summary.bands)}
+          total={summary.count}
+        />
       </div>
       <HistoryTable history={history} picker={viewer} />
       <PhotoDetails {...viewer.dialog} />

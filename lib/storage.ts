@@ -20,6 +20,8 @@ type PhotoUrlOptions = {
 export const photoPath = (userId: string, photoId: string) =>
   `${userId}/${photoId}`;
 
+export const thumbnailPath = (path: string) => `${path}.thumb.webp`;
+
 export async function uploadPhoto(
   path: string,
   bytes: Uint8Array,

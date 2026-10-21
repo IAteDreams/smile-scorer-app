@@ -11,6 +11,7 @@ export const thumbnailSelector = (id: string) => `[data-thumbnail="${id}"]`;
 type PhotoThumbnailProps = {
   id: string;
   photoUrl: string | null;
+  thumbnailUrl: string | null;
   hidden: boolean;
   onError?: () => void;
 };
@@ -18,29 +19,28 @@ type PhotoThumbnailProps = {
 export function PhotoThumbnail({
   id,
   photoUrl,
+  thumbnailUrl,
   hidden,
   onError,
 }: PhotoThumbnailProps) {
+  const src = thumbnailUrl ?? photoUrl;
   return (
     <div
       data-thumbnail={id}
       className={cn(
         "relative size-11 overflow-hidden rounded-lg border",
-        photoUrl ? "bg-muted" : STRIPES,
+        src ? "bg-muted" : STRIPES,
       )}
     >
-      {photoUrl && (
+      {src && (
         <Image
-          src={photoUrl}
+          src={src}
           alt=""
           fill
           unoptimized
           onError={onError}
           sizes="44px"
-          className={cn(
-            "object-cover object-[center_40%]",
-            hidden && "invisible",
-          )}
+          className={cn("object-cover", hidden && "invisible")}
         />
       )}
     </div>

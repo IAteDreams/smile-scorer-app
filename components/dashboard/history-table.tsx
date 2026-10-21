@@ -14,9 +14,19 @@ type HistoryTableProps = {
 
 export function HistoryTable({ history, picker }: HistoryTableProps) {
   return (
-    <Card as="section" aria-labelledby={TITLE_ID} className="overflow-hidden">
+    <Card
+      as="section"
+      aria-labelledby={TITLE_ID}
+      aria-busy={history.loading}
+      className="overflow-hidden"
+    >
       <HistoryHeader titleId={TITLE_ID} filters={history} />
-      <HistoryBody rows={history.rows} query={history.query} picker={picker} />
+      <HistoryBody
+        rows={history.rows}
+        query={history.query}
+        picker={picker}
+        loading={history.loading}
+      />
       <HistoryFooter pagination={history.pagination} />
     </Card>
   );
