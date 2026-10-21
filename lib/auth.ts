@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
+import { env } from "@/lib/env";
 import { redis } from "@/lib/redis";
 import { resend } from "./resend";
 
@@ -45,12 +46,20 @@ export const auth = betterAuth({
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url }) => {
-      await resend.emails.send({
-        from: "noreply@smilescore.com",
+      if (env.NODE_ENV === "development") {
+        console.info(`[auth] Verify ${user.email}: ${url}`);
+        return;
+      }
+
+      const { error } = await resend.emails.send({
+        from: "Resend <onboarding@resend.dev>",
         to: user.email,
         subject: "Verify your email",
         html: `<a href="${url}">Verify your email</a>`,
       });
+      if (error) {
+        throw new Error(`Failed to send verification email: ${error.message}`);
+      }
     },
   },
   secondaryStorage: redisSecondaryStorage,
