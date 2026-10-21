@@ -25,6 +25,7 @@ jobs:
       KV_REST_API_TOKEN: placeholder
       NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: placeholder
+      SUPABASE_SECRET_KEY: placeholder
       AWS_ACCESS_KEY_ID: placeholder
       AWS_SECRET_ACCESS_KEY: placeholder
       AWS_REGION: us-east-1

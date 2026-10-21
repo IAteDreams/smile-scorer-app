@@ -5,10 +5,20 @@ import { ERRORS, HttpError } from "@/lib/error";
 
 import { POST } from "./route";
 
-const { verifySession, withinRateLimit, analyzePhoto } = vi.hoisted(() => ({
+const {
+  verifySession,
+  withinRateLimit,
+  analyzePhoto,
+  uploadPhoto,
+  removePhotos,
+  saveScore,
+} = vi.hoisted(() => ({
   verifySession: vi.fn(),
   withinRateLimit: vi.fn(),
   analyzePhoto: vi.fn(),
+  uploadPhoto: vi.fn(),
+  removePhotos: vi.fn(),
+  saveScore: vi.fn(),
 }));
 
 vi.mock("@/lib/dal/auth-checker", () => ({
@@ -17,6 +27,12 @@ vi.mock("@/lib/dal/auth-checker", () => ({
 }));
 vi.mock("@/lib/rate-limit", () => ({ withinRateLimit }));
 vi.mock("@/lib/rekognition", () => ({ analyzePhoto }));
+vi.mock("@/lib/storage", () => ({
+  photoPath: (userId: string, id: string) => `${userId}/${id}`,
+  uploadPhoto,
+  removePhotos,
+}));
+vi.mock("@/lib/dal/score", () => ({ saveScore }));
 
 const RESULT = { score: 92, label: "Beaming" };
 
@@ -40,12 +56,18 @@ describe("POST /api/score", () => {
     verifySession.mockResolvedValue({ user: { id: "user-1" } });
     withinRateLimit.mockResolvedValue(true);
     analyzePhoto.mockResolvedValue(RESULT);
+    uploadPhoto.mockResolvedValue(undefined);
+    removePhotos.mockResolvedValue(undefined);
+    saveScore.mockResolvedValue(undefined);
   });
 
   it("scores a valid photo", async () => {
     const response = await send(jpeg());
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ success: true, data: RESULT });
+    expect(await response.json()).toEqual({
+      success: true,
+      data: { id: expect.any(String), ...RESULT },
+    });
     expect(analyzePhoto).toHaveBeenCalledWith(expect.any(Uint8Array));
     expect(withinRateLimit).toHaveBeenCalledWith(
       "rate-limit:score:user-1",
@@ -97,5 +119,47 @@ describe("POST /api/score", () => {
     const response = await send(jpeg());
     expect(response.status).toBe(422);
     expect((await response.json()).error.message).toBe(ERRORS.score.noFace);
+    expect(uploadPhoto).not.toHaveBeenCalled();
+    expect(saveScore).not.toHaveBeenCalled();
+  });
+
+  it("stores the photo and its score under the user's folder", async () => {
+    const response = await send(jpeg(10));
+    const { data } = await response.json();
+
+    const path = `user-1/${data.id}`;
+    expect(uploadPhoto).toHaveBeenCalledWith(
+      path,
+      expect.any(Uint8Array),
+      "image/jpeg",
+    );
+    expect(saveScore).toHaveBeenCalledWith({
+      id: data.id,
+      userId: "user-1",
+      path,
+      contentType: "image/jpeg",
+      size: 10,
+      result: RESULT,
+    });
+    expect(removePhotos).not.toHaveBeenCalled();
+  });
+
+  it("does not save a score when the upload fails", async () => {
+    uploadPhoto.mockRejectedValue(new Error("storage down"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await send(jpeg());
+    expect(response.status).toBe(500);
+    expect(saveScore).not.toHaveBeenCalled();
+  });
+
+  it("removes the uploaded photo when saving the score fails", async () => {
+    saveScore.mockRejectedValue(new Error("db down"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await send(jpeg());
+    const [[path]] = uploadPhoto.mock.calls;
+    expect(response.status).toBe(500);
+    expect(removePhotos).toHaveBeenCalledWith([path]);
   });
 });

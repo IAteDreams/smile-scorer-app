@@ -1,10 +1,13 @@
+import { uuidv7 } from "uuidv7";
 import { SCORE_RATE_LIMIT } from "@/lib/constants/scoring";
 import { apiWrapper } from "@/lib/dal/api";
 import { verifyAuth } from "@/lib/dal/auth-checker";
+import { saveScore } from "@/lib/dal/score";
 import { ERRORS, HttpError } from "@/lib/error";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { analyzePhoto } from "@/lib/rekognition";
 import { photoSchema } from "@/lib/schemas/score";
+import { photoPath, removePhotos, uploadPhoto } from "@/lib/storage";
 
 export const POST = apiWrapper(({ req }) =>
   verifyAuth(async ({ user }) => {
@@ -26,6 +29,28 @@ export const POST = apiWrapper(({ req }) =>
     );
     if (!allowed) throw new HttpError(429, ERRORS.score.rateLimited);
 
-    return analyzePhoto(new Uint8Array(await parsed.data.arrayBuffer()));
+    const photo = parsed.data;
+    const bytes = new Uint8Array(await photo.arrayBuffer());
+    const result = await analyzePhoto(bytes);
+
+    const id = uuidv7();
+    const path = photoPath(user.id, id);
+    await uploadPhoto(path, bytes, photo.type);
+
+    try {
+      await saveScore({
+        id,
+        userId: user.id,
+        path,
+        contentType: photo.type,
+        size: photo.size,
+        result,
+      });
+    } catch (error) {
+      await removePhotos([path]).catch(() => {});
+      throw error;
+    }
+
+    return { id, ...result };
   }),
 );
