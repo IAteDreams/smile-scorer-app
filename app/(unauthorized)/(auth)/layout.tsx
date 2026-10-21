@@ -16,14 +16,14 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
         </main>
 
         <p className="text-xs text-muted-foreground">
-          By continuing you agree to our
+          By continuing you agree to our{" "}
           <Link
             href={LINKS.public.terms}
             className="underline underline-offset-2"
           >
             Terms
-          </Link>
-          and
+          </Link>{" "}
+          and{" "}
           <Link
             href={LINKS.public.privacy}
             className="underline underline-offset-2"
