@@ -200,7 +200,11 @@ describe("DashboardView", () => {
 
   it("expands a photo and compares it with the whole history", async () => {
     renderView();
-    fireEvent.click(screen.getByRole("button", { name: "View beach-day.jpg" }));
+    fireEvent.click(
+      within(screen.getByRole("table")).getByRole("button", {
+        name: "View beach-day.jpg",
+      }),
+    );
 
     const dialog = await screen.findByRole("dialog", { name: "beach-day.jpg" });
     await waitFor(() =>
@@ -253,9 +257,10 @@ describe("DashboardView", () => {
     expect(
       await screen.findByRole("dialog", { name: "fresh.jpg" }),
     ).toBeInTheDocument();
+    // In the table and in the cards (jsdom renders both layouts).
     expect(
-      screen.getByRole("button", { name: "View fresh.jpg", hidden: true }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("button", { name: "View fresh.jpg", hidden: true }),
+    ).toHaveLength(2);
   });
 
   it("guides a new user", () => {

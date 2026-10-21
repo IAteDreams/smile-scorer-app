@@ -2,7 +2,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { Download, XIcon } from "lucide-react";
 import {
   ExpandedPhoto,
-  thumbnailSelector,
+  findThumbnail,
 } from "@/components/dashboard/score-photo";
 import { ScoreRing } from "@/components/common/score-ring";
 import { Button } from "@/components/ui/button";
@@ -35,11 +35,7 @@ export function PhotoDetails({
   } = usePhotoFlight({
     hasPhoto: Boolean(photo?.photoUrl),
     getOrigin: () =>
-      photo
-        ? (document
-            .querySelector(thumbnailSelector(photo.id))
-            ?.getBoundingClientRect() ?? null)
-        : null,
+      photo ? (findThumbnail(photo.id)?.getBoundingClientRect() ?? null) : null,
     onFlightStart,
     onClose: () => onOpenChange(false),
   });

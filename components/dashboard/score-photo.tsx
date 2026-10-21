@@ -4,7 +4,10 @@ import { FaceBox, type FaceBoxRect } from "@/components/common/face-box";
 import { PHOTO_PLACEHOLDER_STRIPES } from "@/lib/constants/dashboard";
 import { cn } from "@/lib/utils";
 
-export const thumbnailSelector = (id: string) => `[data-thumbnail="${id}"]`;
+export const findThumbnail = (id: string) =>
+  Array.from(document.querySelectorAll(`[data-thumbnail="${id}"]`)).find(
+    (element) => element.getClientRects().length > 0,
+  ) ?? null;
 
 type PhotoThumbnailProps = {
   id: string;

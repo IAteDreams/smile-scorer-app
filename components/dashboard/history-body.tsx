@@ -1,4 +1,5 @@
 import { ScoreBar } from "@/components/common/score-bar";
+import { HistoryCards } from "@/components/dashboard/history-cards";
 import { PhotoThumbnail } from "@/components/dashboard/score-photo";
 import { HISTORY_COLUMNS } from "@/lib/constants/dashboard";
 import { cn } from "@/lib/utils";
@@ -20,41 +21,40 @@ export function HistoryBody({
 }: HistoryBodyProps) {
   const search = query.trim();
 
+  if (rows.length === 0) {
+    return (
+      <p className="border-t px-6 py-10 text-center text-sm text-muted-foreground">
+        {search
+          ? `No photos match “${search}”.`
+          : "No photos yet. Upload one to see it here."}
+      </p>
+    );
+  }
+
   return (
-    <div
-      className={cn(
-        "overflow-x-auto transition-opacity",
-        loading && "opacity-60",
-      )}
-    >
-      <table className="w-full min-w-170 text-sm">
-        <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
-          <tr className="border-b">
-            {HISTORY_COLUMNS.map((column) => (
-              <th
-                key={column}
-                scope="col"
-                className="px-4 py-2.5 font-medium first:pl-6 last:pr-6"
-              >
-                {column}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 ? (
-            <tr>
-              <td
-                colSpan={HISTORY_COLUMNS.length}
-                className="px-6 py-10 text-center text-muted-foreground"
-              >
-                {search
-                  ? `No photos match “${search}”.`
-                  : "No photos yet. Upload one to see it here."}
-              </td>
+    <div className={cn("transition-opacity", loading && "opacity-60")}>
+      <HistoryCards
+        rows={rows}
+        picker={picker}
+        className="border-t md:hidden"
+      />
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full min-w-170 text-sm">
+          <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
+            <tr className="border-b">
+              {HISTORY_COLUMNS.map((column) => (
+                <th
+                  key={column}
+                  scope="col"
+                  className="px-4 py-2.5 font-medium first:pl-6 last:pr-6"
+                >
+                  {column}
+                </th>
+              ))}
             </tr>
-          ) : (
-            rows.map((row) => (
+          </thead>
+          <tbody>
+            {rows.map((row) => (
               <tr
                 key={row.id}
                 onClick={() => picker.show(row.id)}
@@ -101,10 +101,10 @@ export function HistoryBody({
                   {row.confidence}
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

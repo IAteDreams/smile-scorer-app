@@ -26,6 +26,10 @@ const setup = (overrides: Partial<ComponentProps<typeof HistoryBody>> = {}) => {
   return props;
 };
 
+// jsdom ignores CSS, so the cards (phones) and the table (wider screens)
+// are both rendered; these tests look inside the table.
+const table = () => within(screen.getByRole("table"));
+
 describe("HistoryBody", () => {
   it("labels the columns", () => {
     setup();
@@ -43,7 +47,7 @@ describe("HistoryBody", () => {
 
   it("shows each photo's details", () => {
     setup();
-    const row = screen.getByRole("row", { name: /beach-day\.jpg/ });
+    const row = table().getByRole("row", { name: /beach-day\.jpg/ });
     expect(
       within(row)
         .getAllByRole("cell")
@@ -56,11 +60,13 @@ describe("HistoryBody", () => {
 
   it("opens a photo from its thumbnail or row", () => {
     const { show: onSelect } = setup().picker;
-    fireEvent.click(screen.getByRole("button", { name: "View beach-day.jpg" }));
+    fireEvent.click(
+      table().getByRole("button", { name: "View beach-day.jpg" }),
+    );
     expect(onSelect).toHaveBeenCalledExactlyOnceWith("1");
 
     vi.mocked(onSelect).mockClear();
-    fireEvent.click(screen.getByText("Today, 2:14 PM"));
+    fireEvent.click(table().getByText("Today, 2:14 PM"));
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
@@ -68,21 +74,36 @@ describe("HistoryBody", () => {
     setup({
       picker: { hiddenId: "1", show: vi.fn(), onPhotoError: vi.fn() },
     });
-    const button = screen.getByRole("button", { name: "View beach-day.jpg" });
+    const button = table().getByRole("button", { name: "View beach-day.jpg" });
     expect(button.querySelector("img")).toHaveClass("invisible");
     expect(button.firstElementChild).toHaveAttribute("data-thumbnail", "1");
   });
 
   it("asks for a fresh URL when a thumbnail fails to load", () => {
     const { picker } = setup();
-    const button = screen.getByRole("button", { name: "View beach-day.jpg" });
+    const button = table().getByRole("button", { name: "View beach-day.jpg" });
     fireEvent.error(button.querySelector("img")!);
     expect(picker.onPhotoError).toHaveBeenCalledWith("1");
+  });
+
+  it("shows the same photos as cards on small screens", () => {
+    setup();
+    const cards = screen.getByRole("list", { name: "Photos" });
+    expect(cards).toHaveClass("md:hidden");
+    expect(
+      within(cards).getByRole("button", { name: "View beach-day.jpg" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("table").parentElement).toHaveClass(
+      "hidden",
+      "md:block",
+    );
   });
 
   it("explains when a search has no matches", () => {
     setup({ rows: [], query: " zebra " });
     expect(screen.getByText("No photos match “zebra”.")).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
   it("explains an empty history", () => {
