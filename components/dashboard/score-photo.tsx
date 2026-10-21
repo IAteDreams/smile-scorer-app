@@ -1,10 +1,8 @@
 import Image from "next/image";
 import type { Ref } from "react";
 import { FaceBox, type FaceBoxRect } from "@/components/common/face-box";
+import { PHOTO_PLACEHOLDER_STRIPES } from "@/lib/constants/dashboard";
 import { cn } from "@/lib/utils";
-
-const STRIPES =
-  "bg-[repeating-linear-gradient(135deg,var(--muted)_0_5px,var(--border)_5px_10px)]";
 
 export const thumbnailSelector = (id: string) => `[data-thumbnail="${id}"]`;
 
@@ -29,7 +27,7 @@ export function PhotoThumbnail({
       data-thumbnail={id}
       className={cn(
         "relative size-11 overflow-hidden rounded-lg border",
-        src ? "bg-muted" : STRIPES,
+        src ? "bg-muted" : PHOTO_PLACEHOLDER_STRIPES,
       )}
     >
       {src && (
@@ -75,7 +73,7 @@ export function ExpandedPhoto({
       <div
         className={cn(
           "flex aspect-square w-full items-center justify-center rounded-lg font-mono text-xs text-muted-foreground",
-          STRIPES,
+          PHOTO_PLACEHOLDER_STRIPES,
         )}
       >
         Photo unavailable

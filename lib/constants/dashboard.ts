@@ -35,3 +35,7 @@ export const HISTORY_SORTS = [
   { value: "highest", label: "Highest score" },
   { value: "lowest", label: "Lowest score" },
 ] as const;
+
+/** Diagonal stripes shown where a photo or thumbnail is unavailable. */
+export const PHOTO_PLACEHOLDER_STRIPES =
+  "bg-[repeating-linear-gradient(135deg,var(--muted)_0_5px,var(--border)_5px_10px)]";
