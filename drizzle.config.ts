@@ -1,6 +1,6 @@
 import { defineConfig } from "drizzle-kit";
 import { loadEnvConfig } from "@next/env";
-import { withoutSupaParam } from "./db/url";
+import { isLocalDatabase, withoutSupaParam } from "./db/url";
 
 loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
 
@@ -9,7 +9,7 @@ if (!process.env.POSTGRES_URL) {
 }
 
 const url = new URL(withoutSupaParam(process.env.POSTGRES_URL));
-if (!url.searchParams.has("sslmode"))
+if (!url.searchParams.has("sslmode") && !isLocalDatabase(url.toString()))
   url.searchParams.set("sslmode", "require");
 
 export default defineConfig({

@@ -50,3 +50,7 @@ node_modules/
 /playwright/.auth/
 
 .vercel
+
+# end-to-end test build and generated fixtures
+/.next-e2e/
+/tests/.cache/
