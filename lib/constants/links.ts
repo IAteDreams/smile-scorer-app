@@ -25,6 +25,7 @@ export const API = {
     page: number;
   }) =>
     `/api/score?${new URLSearchParams({ q: query, sort, page: String(page) })}`,
+  score: "/api/score",
   upload: (id: string, { download = false } = {}) =>
     `/api/upload/${id}${download ? "?download=1" : ""}`,
 } as const;

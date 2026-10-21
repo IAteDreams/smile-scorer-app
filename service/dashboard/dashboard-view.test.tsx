@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -212,6 +213,49 @@ describe("DashboardView", () => {
     await waitFor(() =>
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );
+  });
+
+  it("scores an upload, reloads the history and opens the new photo", async () => {
+    URL.createObjectURL = vi.fn(() => "blob:preview");
+    URL.revokeObjectURL = vi.fn();
+    const fresh = scoreEntry({
+      id: "fresh",
+      fileName: "fresh.jpg",
+      score: 88,
+      rank: 3,
+    });
+    vi.mocked(fetch).mockImplementation(async (_, init) =>
+      init?.method === "POST"
+        ? ok({ id: "fresh", score: 88, label: "Beaming" })
+        : ok(page([fresh, ...entries.slice(0, 5)], 0, 10)),
+    );
+    renderView();
+
+    fireEvent.click(screen.getByRole("button", { name: "Upload photo" }));
+    const upload = await screen.findByRole("dialog", {
+      name: "Upload a photo",
+    });
+    const input = upload.querySelector<HTMLInputElement>('input[type="file"]')!;
+    fireEvent.change(input, {
+      target: {
+        files: [new File(["x"], "fresh.jpg", { type: "image/jpeg" })],
+      },
+    });
+    fireEvent.click(within(upload).getByRole("checkbox"));
+    await act(async () =>
+      fireEvent.click(
+        within(upload).getByRole("button", { name: "Score smile" }),
+      ),
+    );
+
+    expect(toast.success).toHaveBeenCalledWith("fresh.jpg scored 88: Beaming");
+    expect(refresh).toHaveBeenCalled();
+    expect(
+      await screen.findByRole("dialog", { name: "fresh.jpg" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "View fresh.jpg", hidden: true }),
+    ).toBeInTheDocument();
   });
 
   it("guides a new user", () => {

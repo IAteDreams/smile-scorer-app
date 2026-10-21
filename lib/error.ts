@@ -17,6 +17,7 @@ export const ERRORS = {
     unreadableImage: "We couldn't read that image. Try a different photo.",
     busy: "Scoring is busy right now. Try again in a moment.",
     rateLimited: "You've scored a lot of photos. Wait a minute and try again.",
+    uploadFailed: "We couldn't score that photo. Try again.",
   },
   history: {
     loadFailed: "We couldn't load your history. Try again.",
