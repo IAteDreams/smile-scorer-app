@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { PRIVACY_POLICY } from "./legal";
+import { PRIVACY_POLICY, TERMS_OF_SERVICE } from "./legal";
 
-describe("PRIVACY_POLICY", () => {
-  const ids = PRIVACY_POLICY.sections.map((section) => section.id);
+describe.each([
+  ["PRIVACY_POLICY", PRIVACY_POLICY],
+  ["TERMS_OF_SERVICE", TERMS_OF_SERVICE],
+])("%s", (_, document) => {
+  const ids = document.sections.map((section) => section.id);
 
   it("has unique section anchors", () => {
     expect(new Set(ids).size).toBe(ids.length);
@@ -14,7 +17,7 @@ describe("PRIVACY_POLICY", () => {
   });
 
   it("gives every section some text", () => {
-    PRIVACY_POLICY.sections.forEach((section) =>
+    document.sections.forEach((section) =>
       expect(section.paragraphs.length).toBeGreaterThan(0),
     );
   });
