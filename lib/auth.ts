@@ -1,11 +1,15 @@
-import { betterAuth, SecondaryStorage } from "better-auth";
+import { betterAuth, SecondaryStorage, type User } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
+import {
+  sendExistingAccountEmail,
+  sendVerificationEmail,
+} from "@/lib/auth-emails";
+import { LINKS } from "@/lib/constants/links";
 import { env } from "@/lib/env";
 import { redis } from "@/lib/redis";
-import { resend } from "./resend";
 
 const redisSecondaryStorage: SecondaryStorage = {
   get(key) {
@@ -41,6 +45,35 @@ const baseURL =
     ? { allowedHosts: previewHosts, protocol: "https" as const }
     : undefined;
 
+/**
+ * Someone signed up with an email that already has an account. Better Auth
+ * still answers with a normal sign-up response, so the form can't be used to
+ * find out who is registered; the email tells the real owner what to do.
+ */
+async function onExistingUserSignUp(
+  { user }: { user: User },
+  request?: Request,
+): Promise<void> {
+  try {
+    if (user.emailVerified) {
+      const origin = request
+        ? new URL(request.url).origin
+        : (await auth.$context).baseURL;
+      await sendExistingAccountEmail({
+        email: user.email,
+        signInUrl: new URL(LINKS.guest.signIn, origin).href,
+      });
+    } else {
+      await auth.api.sendVerificationEmail({
+        body: { email: user.email, callbackURL: LINKS.protected.dashboard },
+      });
+    }
+  } catch (error) {
+    // Failing here would answer differently for registered emails.
+    console.error("[auth] Could not email an existing user", error);
+  }
+}
+
 export const auth = betterAuth({
   baseURL,
   database: drizzleAdapter(db, {
@@ -50,26 +83,12 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
+    onExistingUserSignUp,
   },
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url }) => {
-      if (env.NODE_ENV === "development") {
-        console.info(`[auth] Verify ${user.email}: ${url}`);
-        return;
-      }
-
-      const { error } = await resend.emails.send({
-        from: "Resend <onboarding@resend.dev>",
-        to: user.email,
-        subject: "Verify your email",
-        html: `<a href="${url}">Verify your email</a>`,
-      });
-      if (error) {
-        throw new Error(`Failed to send verification email: ${error.message}`);
-      }
-    },
+    sendVerificationEmail,
   },
   secondaryStorage: redisSecondaryStorage,
   session: {

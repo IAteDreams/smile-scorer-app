@@ -32,6 +32,19 @@ export async function latestEmail(to: string) {
   throw new Error(`no email was sent to ${to}`);
 }
 
+/** Every email the app sent to `to`, waiting until there are `count`. */
+export async function emailsTo(to: string, count: number) {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const response = await fetch(
+      `${SERVICES_URL}/__e2e/emails?to=${encodeURIComponent(to)}`,
+    );
+    const emails = (await response.json()) as Email[];
+    if (emails.length >= count) return emails;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error(`fewer than ${count} emails were sent to ${to}`);
+}
+
 export function verificationLink(email: Email) {
   const href = /href="([^"]+)"/.exec(email.html)?.[1];
   if (!href) throw new Error("verification email has no link");
