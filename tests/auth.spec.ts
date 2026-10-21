@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import {
+  emailsTo,
   expect,
   latestEmail,
   newAccount,
@@ -59,6 +60,49 @@ test.describe("sign up", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: /, Jun$/ }),
     ).toBeVisible();
+  });
+
+  test("sends a fresh verification link to an account that was never verified", async ({
+    page,
+  }) => {
+    const account = newAccount();
+    await signUpByApi(page, account);
+    await emailsTo(account.email, 1);
+
+    await signUpThroughForm(page, account);
+    await expect(
+      page.getByRole("heading", { name: "Check your email" }),
+    ).toBeVisible();
+
+    const [first, second] = await emailsTo(account.email, 2);
+    expect(second.subject).toBe("Verify your email");
+    expect(verificationLink(second)).not.toBe(verificationLink(first));
+    await page.goto(verificationLink(second));
+    await expect(page).toHaveURL(/\/dashboard$/);
+  });
+
+  test("tells a verified user they already have an account", async ({
+    page,
+    account,
+  }) => {
+    await page.context().clearCookies();
+    const sent = (await emailsTo(account.email, 1)).length;
+
+    // Same email, different password: the form can't tell it apart from a
+    // new sign-up, and the existing password must keep working.
+    await signUpThroughForm(page, { ...account, password: "another-password" });
+    await expect(
+      page.getByRole("heading", { name: "Check your email" }),
+    ).toBeVisible();
+
+    const email = (await emailsTo(account.email, sent + 1)).at(-1)!;
+    expect(email.subject).toBe("You already have an account");
+    expect(email.html).toContain("Sign in instead.");
+    await page.goto(verificationLink(email));
+    await expect(page).toHaveURL(/\/sign-in$/);
+
+    await fillSignIn(page, account.email, account.password);
+    await expect(page).toHaveURL(/\/dashboard$/);
   });
 });
 

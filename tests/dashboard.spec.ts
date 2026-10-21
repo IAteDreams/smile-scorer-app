@@ -18,8 +18,17 @@ const PHOTOS: SeedPhoto[] = [
 
 const history = (page: Page) => page.getByRole("region", { name: "History" });
 
+// Each photo has a "View <file>" button, in the table and in the phone cards;
+// role queries only match the layout that is on screen.
+const photoButtons = (page: Page) =>
+  history(page).getByRole("button", { name: /^View / });
+
 const fileNames = (page: Page) =>
-  history(page).getByRole("rowheader").allTextContents();
+  photoButtons(page).evaluateAll((buttons) =>
+    buttons.map((button) =>
+      button.getAttribute("aria-label")!.replace(/^View /, ""),
+    ),
+  );
 
 const stat = (page: Page, label: string) =>
   page.locator("dl > div").filter({ hasText: label });
@@ -98,9 +107,22 @@ test.describe("with a history", () => {
     await page.getByRole("menuitemradio", { name: "Highest score" }).click();
 
     await expect(history(page).getByText("Showing 1–6 of 9")).toBeVisible();
-    await expect(history(page).getByRole("rowheader").first()).toHaveText(
-      "sunset-walk.jpg",
+    await expect(photoButtons(page).first()).toHaveAccessibleName(
+      "View sunset-walk.jpg",
     );
+  });
+
+  test("shows a table on wide screens and cards on phones", async ({
+    page,
+    isMobile,
+  }) => {
+    const table = history(page).getByRole("table");
+    const cards = history(page).getByRole("list", { name: "Photos" });
+    await expect(isMobile ? cards : table).toBeVisible();
+    await expect(isMobile ? table : cards).toBeHidden();
+    expect(
+      await history(page).evaluate((el) => el.scrollWidth - el.clientWidth),
+    ).toBe(0);
   });
 
   test("shows small thumbnails from storage", async ({ page }) => {
@@ -131,6 +153,14 @@ test.describe("with a history", () => {
     await expect(
       dialog.getByRole("img", { name: "Photo beach-day.jpg" }),
     ).toBeVisible();
+
+    // Fits the screen sideways, and the actions can always be scrolled to.
+    expect(await dialog.evaluate((el) => el.scrollWidth - el.clientWidth)).toBe(
+      0,
+    );
+    const done = dialog.getByRole("button", { name: "Done" });
+    await done.scrollIntoViewIfNeeded();
+    await expect(done).toBeInViewport({ ratio: 1 });
 
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();

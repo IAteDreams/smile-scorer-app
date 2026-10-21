@@ -2,7 +2,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { Download, XIcon } from "lucide-react";
 import {
   ExpandedPhoto,
-  thumbnailSelector,
+  findThumbnail,
 } from "@/components/dashboard/score-photo";
 import { ScoreRing } from "@/components/common/score-ring";
 import { Button } from "@/components/ui/button";
@@ -35,11 +35,7 @@ export function PhotoDetails({
   } = usePhotoFlight({
     hasPhoto: Boolean(photo?.photoUrl),
     getOrigin: () =>
-      photo
-        ? (document
-            .querySelector(thumbnailSelector(photo.id))
-            ?.getBoundingClientRect() ?? null)
-        : null,
+      photo ? (findThumbnail(photo.id)?.getBoundingClientRect() ?? null) : null,
     onFlightStart,
     onClose: () => onOpenChange(false),
   });
@@ -68,7 +64,7 @@ export function PhotoDetails({
           aria-describedby={DESCRIPTION_ID}
           data-phase={phase}
           className={cn(
-            "fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-215 -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[14px] border bg-popover text-popover-foreground shadow-[0_24px_60px_-12px_rgb(0_0_0/0.3)] transition-[background-color,border-color,box-shadow] duration-200 outline-none md:grid-cols-2 md:overflow-hidden",
+            "fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-215 -translate-x-1/2 -translate-y-1/2 grid-cols-1 overflow-y-auto rounded-[14px] border bg-popover text-popover-foreground shadow-[0_24px_60px_-12px_rgb(0_0_0/0.3)] transition-[background-color,border-color,box-shadow] duration-200 outline-none md:grid-cols-2 md:overflow-hidden",
             !panelVisible && "border-transparent bg-transparent shadow-none",
             closed && "invisible",
           )}
@@ -99,7 +95,7 @@ export function PhotoDetails({
               <div
                 data-testid="photo-details-panel"
                 className={cn(
-                  "flex flex-col gap-5 p-6 transition-opacity duration-200 md:overflow-y-auto md:p-7",
+                  "flex flex-col gap-5 p-6 transition-opacity duration-200 md:max-h-[calc(100dvh-2rem)] md:overflow-y-auto md:p-7",
                   !panelVisible && "opacity-0",
                 )}
               >

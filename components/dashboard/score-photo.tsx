@@ -1,12 +1,13 @@
 import Image from "next/image";
 import type { Ref } from "react";
 import { FaceBox, type FaceBoxRect } from "@/components/common/face-box";
+import { PHOTO_PLACEHOLDER_STRIPES } from "@/lib/constants/dashboard";
 import { cn } from "@/lib/utils";
 
-const STRIPES =
-  "bg-[repeating-linear-gradient(135deg,var(--muted)_0_5px,var(--border)_5px_10px)]";
-
-export const thumbnailSelector = (id: string) => `[data-thumbnail="${id}"]`;
+export const findThumbnail = (id: string) =>
+  Array.from(document.querySelectorAll(`[data-thumbnail="${id}"]`)).find(
+    (element) => element.getClientRects().length > 0,
+  ) ?? null;
 
 type PhotoThumbnailProps = {
   id: string;
@@ -29,7 +30,7 @@ export function PhotoThumbnail({
       data-thumbnail={id}
       className={cn(
         "relative size-11 overflow-hidden rounded-lg border",
-        src ? "bg-muted" : STRIPES,
+        src ? "bg-muted" : PHOTO_PLACEHOLDER_STRIPES,
       )}
     >
       {src && (
@@ -75,7 +76,7 @@ export function ExpandedPhoto({
       <div
         className={cn(
           "flex aspect-square w-full items-center justify-center rounded-lg font-mono text-xs text-muted-foreground",
-          STRIPES,
+          PHOTO_PLACEHOLDER_STRIPES,
         )}
       >
         Photo unavailable
@@ -98,7 +99,7 @@ export function ExpandedPhoto({
         sizes="(min-width: 768px) 430px, 100vw"
         onLoad={(event) => onReady(event.currentTarget)}
         onError={onError}
-        className="h-auto max-h-[45dvh] w-auto max-w-full rounded-lg md:max-h-[70dvh]"
+        className="h-auto max-h-[45dvh] w-auto max-w-full rounded-lg md:max-h-[min(70dvh,calc(100dvh-6rem))]"
       />
       <FaceBox
         box={box}
