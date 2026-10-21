@@ -6,14 +6,28 @@ import {
   within,
 } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { sampleScores } from "@/service/dashboard/sample-scores";
+import { scoreEntry, TEST_NOW } from "@/lib/__fixtures__/score-entry";
 
 import { DashboardView } from "./dashboard-view";
 
 vi.mock("@/lib/hooks/use-time-zone", () => ({ useTimeZone: () => "UTC" }));
 
-const NOW = Date.parse("2026-10-21T14:14:00Z");
-const entries = sampleScores(NOW);
+const NOW = TEST_NOW;
+const photo = (fileName: string, daysAgo: number, score: number) =>
+  scoreEntry({ id: fileName.replace(/\.\w+$/, ""), fileName, daysAgo, score });
+
+// Newest first; days 0–5 make a six-day streak, sunset-walk is the best.
+const entries = [
+  photo("beach-day.jpg", 0, 92),
+  photo("graduation.png", 1, 81),
+  photo("birthday-cake.jpg", 2, 90),
+  photo("office-badge.jpg", 3, 54),
+  photo("selfie-0931.jpg", 4, 73),
+  photo("park-picnic.jpg", 5, 85),
+  photo("coffee-date.jpg", 7, 79),
+  photo("rainy-day.jpg", 17, 58),
+  photo("sunset-walk.jpg", 40, 96),
+];
 
 const fileNames = () =>
   within(screen.getByRole("table"))
@@ -30,7 +44,7 @@ describe("DashboardView", () => {
       screen.getByRole("heading", { level: 1, name: "Good afternoon, Maria" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("You've scored 24 photos. Your last smile was a 92."),
+      screen.getByText("You've scored 9 photos. Your last smile was a 92."),
     ).toBeInTheDocument();
   });
 
@@ -44,17 +58,21 @@ describe("DashboardView", () => {
       "selfie-0931.jpg",
       "park-picnic.jpg",
     ]);
-    expect(screen.getByText("Showing 1–6 of 24")).toBeInTheDocument();
+    expect(screen.getByText("Showing 1–6 of 9")).toBeInTheDocument();
   });
 
   it("pages through the history", () => {
     renderView();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByText("Showing 7–12 of 24")).toBeInTheDocument();
-    expect(fileNames()[0]).toBe("coffee-date.jpg");
+    expect(screen.getByText("Showing 7–9 of 9")).toBeInTheDocument();
+    expect(fileNames()).toEqual([
+      "coffee-date.jpg",
+      "rainy-day.jpg",
+      "sunset-walk.jpg",
+    ]);
 
     fireEvent.click(screen.getByRole("button", { name: "Previous" }));
-    expect(screen.getByText("Showing 1–6 of 24")).toBeInTheDocument();
+    expect(screen.getByText("Showing 1–6 of 9")).toBeInTheDocument();
   });
 
   it("goes back to the first page when searching", () => {
@@ -63,12 +81,8 @@ describe("DashboardView", () => {
     fireEvent.change(screen.getByRole("searchbox", { name: "Search photos" }), {
       target: { value: "-day" },
     });
-    expect(fileNames()).toEqual([
-      "beach-day.jpg",
-      "rainy-day.jpg",
-      "first-day.jpg",
-    ]);
-    expect(screen.getByText("Showing 1–3 of 3")).toBeInTheDocument();
+    expect(fileNames()).toEqual(["beach-day.jpg", "rainy-day.jpg"]);
+    expect(screen.getByText("Showing 1–2 of 2")).toBeInTheDocument();
   });
 
   it("switches the chart range", () => {
@@ -77,17 +91,17 @@ describe("DashboardView", () => {
       within(
         screen.getByRole("list", { name: "Scores from oldest to newest" }),
       ).getAllByRole("listitem");
-    expect(bars()).toHaveLength(14);
+    expect(bars()).toHaveLength(9);
 
-    fireEvent.click(screen.getByRole("button", { name: "All" }));
-    expect(bars()).toHaveLength(24);
-    expect(screen.getByText("All uploads")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "30 days" }));
+    expect(bars()).toHaveLength(8);
+    expect(screen.getByText("Last 30 days")).toBeInTheDocument();
   });
 
   it("shows the stats", () => {
     renderView();
     expect(screen.getByText("Best score").parentElement).toHaveTextContent(
-      "96sunset-walk.jpg · Sep 28",
+      "96sunset-walk.jpg · Sep 11",
     );
     expect(screen.getByText("Smile streak").parentElement).toHaveTextContent(
       "6 days",
@@ -101,7 +115,7 @@ describe("DashboardView", () => {
     const dialog = await screen.findByRole("dialog", { name: "beach-day.jpg" });
     await waitFor(() =>
       expect(dialog).toHaveAccessibleDescription(
-        "22 points above your average. Your second-best score so far.",
+        "13 points above your average. Your second-best score so far.",
       ),
     );
     expect(within(dialog).getByText("Beaming")).toBeInTheDocument();

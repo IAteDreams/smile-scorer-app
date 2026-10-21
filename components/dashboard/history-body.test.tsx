@@ -18,7 +18,7 @@ const setup = (overrides: Partial<ComponentProps<typeof HistoryBody>> = {}) => {
       },
     ],
     query: "",
-    picker: { hiddenId: null, show: vi.fn() },
+    picker: { hiddenId: null, show: vi.fn(), onPhotoError: vi.fn() },
     ...overrides,
   };
   render(<HistoryBody {...props} />);
@@ -64,10 +64,19 @@ describe("HistoryBody", () => {
   });
 
   it("leaves an empty slot while the photo is expanded", () => {
-    setup({ picker: { hiddenId: "1", show: vi.fn() } });
+    setup({
+      picker: { hiddenId: "1", show: vi.fn(), onPhotoError: vi.fn() },
+    });
     const button = screen.getByRole("button", { name: "View beach-day.jpg" });
     expect(button.querySelector("img")).toHaveClass("invisible");
     expect(button.firstElementChild).toHaveAttribute("data-thumbnail", "1");
+  });
+
+  it("asks for a fresh URL when a thumbnail fails to load", () => {
+    const { picker } = setup();
+    const button = screen.getByRole("button", { name: "View beach-day.jpg" });
+    fireEvent.error(button.querySelector("img")!);
+    expect(picker.onPhotoError).toHaveBeenCalledWith("1");
   });
 
   it("explains when a search has no matches", () => {

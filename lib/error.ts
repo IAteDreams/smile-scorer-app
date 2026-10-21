@@ -26,6 +26,7 @@ export const ERRORS = {
   },
   http: {
     unauthorized: "Unauthorized",
+    notFound: "Not found",
     invalidJson: "Invalid JSON body",
     validationFailed: "Validation failed",
     internal: "Internal server error",

@@ -12,9 +12,15 @@ type PhotoThumbnailProps = {
   id: string;
   photoUrl: string | null;
   hidden: boolean;
+  onError?: () => void;
 };
 
-export function PhotoThumbnail({ id, photoUrl, hidden }: PhotoThumbnailProps) {
+export function PhotoThumbnail({
+  id,
+  photoUrl,
+  hidden,
+  onError,
+}: PhotoThumbnailProps) {
   return (
     <div
       data-thumbnail={id}
@@ -28,6 +34,8 @@ export function PhotoThumbnail({ id, photoUrl, hidden }: PhotoThumbnailProps) {
           src={photoUrl}
           alt=""
           fill
+          unoptimized
+          onError={onError}
           sizes="44px"
           className={cn(
             "object-cover object-[center_40%]",
@@ -48,6 +56,7 @@ type ExpandedPhotoProps = {
   visible: boolean;
   boxVisible: boolean;
   onReady: (image: HTMLImageElement | null) => void;
+  onError: () => void;
 };
 
 export function ExpandedPhoto({
@@ -59,6 +68,7 @@ export function ExpandedPhoto({
   visible,
   boxVisible,
   onReady,
+  onError,
 }: ExpandedPhotoProps) {
   if (!photoUrl) {
     return (
@@ -82,11 +92,12 @@ export function ExpandedPhoto({
       <Image
         src={photoUrl}
         alt={alt}
+        unoptimized
         width={0}
         height={0}
         sizes="(min-width: 768px) 430px, 100vw"
         onLoad={(event) => onReady(event.currentTarget)}
-        onError={() => onReady(null)}
+        onError={onError}
         className="h-auto max-h-[45dvh] w-auto max-w-full rounded-lg md:max-h-[70dvh]"
       />
       <FaceBox

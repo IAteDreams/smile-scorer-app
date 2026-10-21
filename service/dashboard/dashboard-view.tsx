@@ -18,6 +18,7 @@ import {
   toStatSummary,
 } from "@/lib/dashboard";
 import { useHistory } from "@/lib/hooks/use-history";
+import { usePhotoUrls } from "@/lib/hooks/use-photo-urls";
 import { usePhotoViewer } from "@/lib/hooks/use-photo-viewer";
 import { useTimeZone } from "@/lib/hooks/use-time-zone";
 import type { ChartRange, ScoreEntry } from "@/types/score";
@@ -39,8 +40,13 @@ export function DashboardView({ name, now, entries }: DashboardViewProps) {
   );
   const latest = getHistory(entries, { query: "", sort: "newest" })[0];
 
-  const history = useHistory(entries, { now, timeZone });
-  const viewer = usePhotoViewer(entries, { now, timeZone });
+  const photos = usePhotoUrls(entries);
+  const history = useHistory(photos.entries, { now, timeZone });
+  const viewer = usePhotoViewer(photos.entries, {
+    now,
+    timeZone,
+    onPhotoError: photos.refresh,
+  });
 
   return (
     <div className="flex flex-col gap-6">

@@ -38,6 +38,7 @@ const setup = (
     onOpenChange: vi.fn(),
     onFlightStart: vi.fn(),
     onClosed: vi.fn(),
+    onPhotoError: vi.fn(async () => false),
     ...overrides,
   };
   render(<PhotoDetails {...props} />);
@@ -95,6 +96,28 @@ describe("PhotoDetails", () => {
     await waitFor(() => expect(panel).not.toHaveClass("opacity-0"));
     expect(onFlightStart).toHaveBeenCalledTimes(1);
     expect(image.parentElement).not.toHaveClass("opacity-0");
+  });
+
+  it("waits for a fresh URL when the photo link has expired", async () => {
+    const onPhotoError = vi.fn(async () => true);
+    const { onFlightStart } = setup({ onPhotoError });
+    fireEvent.error(screen.getByRole("img", { name: "Photo beach-day.jpg" }));
+
+    await waitFor(() => expect(onPhotoError).toHaveBeenCalledTimes(1));
+    expect(onFlightStart).not.toHaveBeenCalled();
+    expect(screen.getByTestId("photo-details-panel")).toHaveClass("opacity-0");
+  });
+
+  it("opens anyway when the photo cannot be refreshed", async () => {
+    const { onFlightStart } = setup({ onPhotoError: vi.fn(async () => false) });
+    fireEvent.error(screen.getByRole("img", { name: "Photo beach-day.jpg" }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("photo-details-panel")).not.toHaveClass(
+        "opacity-0",
+      ),
+    );
+    expect(onFlightStart).toHaveBeenCalled();
   });
 
   it("shows the details at once when there is no photo to fly", () => {

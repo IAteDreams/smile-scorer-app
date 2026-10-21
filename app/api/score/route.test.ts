@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ERRORS, HttpError } from "@/lib/error";
 
-import { POST } from "./route";
+import { GET, POST } from "./route";
 
 const {
   verifySession,
@@ -12,6 +12,7 @@ const {
   uploadPhoto,
   removePhotos,
   saveScore,
+  listScores,
 } = vi.hoisted(() => ({
   verifySession: vi.fn(),
   withinRateLimit: vi.fn(),
@@ -19,6 +20,7 @@ const {
   uploadPhoto: vi.fn(),
   removePhotos: vi.fn(),
   saveScore: vi.fn(),
+  listScores: vi.fn(),
 }));
 
 vi.mock("@/lib/dal/auth-checker", () => ({
@@ -32,7 +34,7 @@ vi.mock("@/lib/storage", () => ({
   uploadPhoto,
   removePhotos,
 }));
-vi.mock("@/lib/dal/score", () => ({ saveScore }));
+vi.mock("@/lib/dal/score", () => ({ saveScore, listScores }));
 
 const RESULT = { score: 92, label: "Beaming" };
 
@@ -137,6 +139,7 @@ describe("POST /api/score", () => {
       id: data.id,
       userId: "user-1",
       path,
+      fileName: "smile.jpg",
       contentType: "image/jpeg",
       size: 10,
       result: RESULT,
@@ -161,5 +164,31 @@ describe("POST /api/score", () => {
     const [[path]] = uploadPhoto.mock.calls;
     expect(response.status).toBe(500);
     expect(removePhotos).toHaveBeenCalledWith([path]);
+  });
+});
+
+describe("GET /api/score", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    verifySession.mockResolvedValue({ user: { id: "user-1" } });
+  });
+
+  it("lists the signed-in user's scores", async () => {
+    const entries = [{ id: "photo-1", score: 92 }];
+    listScores.mockResolvedValue(entries);
+
+    const response = await GET(new NextRequest("http://localhost/api/score"));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ success: true, data: entries });
+    expect(listScores).toHaveBeenCalledWith("user-1");
+  });
+
+  it("requires a signed-in user", async () => {
+    verifySession.mockRejectedValue(
+      new HttpError(401, ERRORS.http.unauthorized),
+    );
+    const response = await GET(new NextRequest("http://localhost/api/score"));
+    expect(response.status).toBe(401);
+    expect(listScores).not.toHaveBeenCalled();
   });
 });

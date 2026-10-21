@@ -19,6 +19,7 @@ export const upload = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     path: text("path").notNull().unique(),
+    fileName: text("file_name"),
     contentType: text("content_type").notNull(),
     size: integer("size").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),

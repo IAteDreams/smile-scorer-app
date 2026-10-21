@@ -1,12 +1,25 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { sampleScores } from "@/service/dashboard/sample-scores";
+import { scoreEntry, TEST_NOW } from "@/lib/__fixtures__/score-entry";
 
 import { useHistory } from "./use-history";
 
-const NOW = Date.parse("2026-10-21T14:14:00Z");
-const entries = sampleScores(NOW);
-const OPTIONS = { now: NOW, timeZone: "UTC" };
+const photo = (fileName: string, daysAgo: number, score: number) =>
+  scoreEntry({ id: fileName.replace(/\.\w+$/, ""), fileName, daysAgo, score });
+
+// Newest first; days 0–5 make a six-day streak, sunset-walk is the best.
+const entries = [
+  photo("beach-day.jpg", 0, 92),
+  photo("graduation.png", 1, 81),
+  photo("birthday-cake.jpg", 2, 90),
+  photo("office-badge.jpg", 3, 54),
+  photo("selfie-0931.jpg", 4, 73),
+  photo("park-picnic.jpg", 5, 85),
+  photo("coffee-date.jpg", 7, 79),
+  photo("rainy-day.jpg", 17, 58),
+  photo("sunset-walk.jpg", 40, 96),
+];
+const OPTIONS = { now: TEST_NOW, timeZone: "UTC" };
 
 const fileNames = (items: { fileName: string }[]) =>
   items.map((item) => item.fileName);
@@ -16,7 +29,7 @@ describe("useHistory", () => {
     const { result } = renderHook(() => useHistory(entries, OPTIONS));
     expect(result.current.query).toBe("");
     expect(result.current.sort).toBe("newest");
-    expect(result.current.pagination.total).toBe(24);
+    expect(result.current.pagination.total).toBe(9);
     expect(fileNames(result.current.pagination.items)).toEqual([
       "beach-day.jpg",
       "graduation.png",
@@ -48,7 +61,6 @@ describe("useHistory", () => {
     expect(fileNames(result.current.pagination.items)).toEqual([
       "beach-day.jpg",
       "rainy-day.jpg",
-      "first-day.jpg",
     ]);
   });
 
@@ -58,23 +70,22 @@ describe("useHistory", () => {
     act(() => result.current.onQueryChange("-day"));
     expect(fileNames(result.current.pagination.items)).toEqual([
       "rainy-day.jpg",
-      "first-day.jpg",
       "beach-day.jpg",
     ]);
   });
 
   it("uses a custom page size", () => {
     const { result } = renderHook(() =>
-      useHistory(entries, { ...OPTIONS, pageSize: 10 }),
+      useHistory(entries, { ...OPTIONS, pageSize: 4 }),
     );
-    expect(result.current.pagination.items).toHaveLength(10);
+    expect(result.current.pagination.items).toHaveLength(4);
   });
 
   it("formats the current page as table rows", () => {
     const { result } = renderHook(() => useHistory(entries, OPTIONS));
     expect(result.current.rows).toHaveLength(6);
     expect(result.current.rows[0]).toMatchObject({
-      id: "sample-1",
+      id: "beach-day",
       fileName: "beach-day.jpg",
       uploaded: expect.stringMatching(/^Today, /),
       score: 92,

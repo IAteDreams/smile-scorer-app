@@ -1,13 +1,18 @@
 import { uuidv7 } from "uuidv7";
 import { SCORE_RATE_LIMIT } from "@/lib/constants/scoring";
+import { MAX_FILE_NAME_LENGTH } from "@/lib/constants/storage";
 import { apiWrapper } from "@/lib/dal/api";
 import { verifyAuth } from "@/lib/dal/auth-checker";
-import { saveScore } from "@/lib/dal/score";
+import { listScores, saveScore } from "@/lib/dal/score";
 import { ERRORS, HttpError } from "@/lib/error";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { analyzePhoto } from "@/lib/rekognition";
 import { photoSchema } from "@/lib/schemas/score";
 import { photoPath, removePhotos, uploadPhoto } from "@/lib/storage";
+
+export const GET = apiWrapper(() =>
+  verifyAuth(({ user }) => listScores(user.id)),
+);
 
 export const POST = apiWrapper(({ req }) =>
   verifyAuth(async ({ user }) => {
@@ -42,6 +47,7 @@ export const POST = apiWrapper(({ req }) =>
         id,
         userId: user.id,
         path,
+        fileName: photo.name.trim().slice(0, MAX_FILE_NAME_LENGTH) || null,
         contentType: photo.type,
         size: photo.size,
         result,

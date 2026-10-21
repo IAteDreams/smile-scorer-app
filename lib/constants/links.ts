@@ -13,3 +13,8 @@ export const LINKS = {
     dashboard: "/dashboard",
   },
 } as const;
+
+export const API = {
+  upload: (id: string, { download = false } = {}) =>
+    `/api/upload/${id}${download ? "?download=1" : ""}`,
+} as const;

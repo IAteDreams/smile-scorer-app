@@ -5,8 +5,9 @@ import { DashboardView } from "@/service/dashboard/dashboard-view";
 
 import { Dashboard, DashboardContent } from "./dashboard";
 
-const { getSession, redirect } = vi.hoisted(() => ({
+const { getSession, redirect, listScores } = vi.hoisted(() => ({
   getSession: vi.fn(),
+  listScores: vi.fn(),
   redirect: vi.fn(() => {
     throw new Error("NEXT_REDIRECT");
   }),
@@ -14,6 +15,7 @@ const { getSession, redirect } = vi.hoisted(() => ({
 
 vi.mock("@/lib/dal/auth-checker", () => ({ getSession }));
 vi.mock("next/navigation", () => ({ redirect }));
+vi.mock("@/lib/dal/score", () => ({ listScores }));
 
 type ViewElement = ReactElement<{
   name: string;
@@ -36,13 +38,18 @@ describe("Dashboard", () => {
 describe("DashboardContent", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("passes the user's name and scores to the view", async () => {
-    getSession.mockResolvedValue({ user: { name: "Maria Reyes" } });
+  it("passes the user's name and saved scores to the view", async () => {
+    const entries = [{ id: "photo-1" }];
+    getSession.mockResolvedValue({
+      user: { id: "user-1", name: "Maria Reyes" },
+    });
+    listScores.mockResolvedValue(entries);
     const element = (await DashboardContent()) as ViewElement;
 
+    expect(listScores).toHaveBeenCalledWith("user-1");
     expect(element.type).toBe(DashboardView);
     expect(element.props.name).toBe("Maria Reyes");
-    expect(element.props.entries).toHaveLength(24);
+    expect(element.props.entries).toBe(entries);
     expect(element.props.now).toBeCloseTo(Date.now(), -4);
   });
 
@@ -50,5 +57,6 @@ describe("DashboardContent", () => {
     getSession.mockResolvedValue(null);
     await expect(DashboardContent()).rejects.toThrow("NEXT_REDIRECT");
     expect(redirect).toHaveBeenCalledWith("/sign-in");
+    expect(listScores).not.toHaveBeenCalled();
   });
 });

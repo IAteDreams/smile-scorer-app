@@ -18,6 +18,7 @@ export function PhotoDetails({
   onOpenChange,
   onFlightStart,
   onClosed,
+  onPhotoError,
 }: PhotoViewerDialog) {
   const {
     phase,
@@ -87,6 +88,9 @@ export function PhotoDetails({
                   visible={photoVisible}
                   boxVisible={panelVisible}
                   onReady={flyIn}
+                  onError={async () => {
+                    if (!(await onPhotoError())) await flyIn(null);
+                  }}
                 />
               </div>
 

@@ -35,7 +35,7 @@ describe("HistoryTable", () => {
             onNext: vi.fn(),
           },
         }}
-        picker={{ hiddenId: null, show: vi.fn() }}
+        picker={{ hiddenId: null, show: vi.fn(), onPhotoError: vi.fn() }}
       />,
     );
 

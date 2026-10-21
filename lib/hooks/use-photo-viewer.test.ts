@@ -1,13 +1,20 @@
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { sampleScores } from "@/service/dashboard/sample-scores";
+import { scoreEntry, TEST_NOW } from "@/lib/__fixtures__/score-entry";
 
 import { usePhotoViewer } from "./use-photo-viewer";
 
-const NOW = Date.parse("2026-10-21T14:14:00Z");
-const entries = sampleScores(NOW);
-const OPTIONS = { now: NOW, timeZone: "UTC" };
+const entries = [
+  scoreEntry({
+    id: "photo-1",
+    fileName: "beach-day.jpg",
+    score: 92,
+    faceCount: 4,
+  }),
+  scoreEntry({ id: "photo-2", daysAgo: 1, score: 81 }),
+];
+const OPTIONS = { now: TEST_NOW, timeZone: "UTC" };
 
 describe("usePhotoViewer", () => {
   it("starts with nothing open", () => {
@@ -20,24 +27,24 @@ describe("usePhotoViewer", () => {
   it("opens a photo and hides its thumbnail only once it flies", () => {
     const { result } = renderHook(() => usePhotoViewer(entries, OPTIONS));
 
-    act(() => result.current.show("sample-1"));
-    expect(result.current.selectedId).toBe("sample-1");
+    act(() => result.current.show("photo-1"));
+    expect(result.current.selectedId).toBe("photo-1");
     expect(result.current.dialog.open).toBe(true);
     expect(result.current.hiddenId).toBeNull();
 
     act(() => result.current.dialog.onFlightStart());
-    expect(result.current.hiddenId).toBe("sample-1");
+    expect(result.current.hiddenId).toBe("photo-1");
   });
 
   it("shows the thumbnail again as soon as the dialog closes", () => {
     const { result } = renderHook(() => usePhotoViewer(entries, OPTIONS));
-    act(() => result.current.show("sample-1"));
+    act(() => result.current.show("photo-1"));
     act(() => result.current.dialog.onFlightStart());
 
     act(() => result.current.dialog.onOpenChange(false));
     expect(result.current.dialog.open).toBe(false);
     expect(result.current.hiddenId).toBeNull();
-    expect(result.current.selectedId).toBe("sample-1");
+    expect(result.current.selectedId).toBe("photo-1");
 
     act(() => result.current.dialog.onClosed());
     expect(result.current.selectedId).toBeNull();
@@ -47,14 +54,29 @@ describe("usePhotoViewer", () => {
     const { result } = renderHook(() => usePhotoViewer(entries, OPTIONS));
     expect(result.current.dialog.photo).toBeNull();
 
-    act(() => result.current.show("sample-1"));
+    act(() => result.current.show("photo-1"));
     expect(result.current.dialog.photo).toMatchObject({
-      id: "sample-1",
+      id: "photo-1",
       fileName: "beach-day.jpg",
       score: 92,
       label: "Beaming",
       faceCount: 4,
       faceConfidence: "99.9%",
     });
+  });
+
+  it("refreshes the open photo's URL through the dialog", async () => {
+    const onPhotoError = vi.fn(async () => true);
+    const { result } = renderHook(() =>
+      usePhotoViewer(entries, { ...OPTIONS, onPhotoError }),
+    );
+
+    expect(await result.current.dialog.onPhotoError()).toBe(false);
+    expect(onPhotoError).not.toHaveBeenCalled();
+
+    act(() => result.current.show("photo-1"));
+    expect(await result.current.dialog.onPhotoError()).toBe(true);
+    expect(onPhotoError).toHaveBeenCalledWith("photo-1");
+    expect(result.current.onPhotoError).toBe(onPhotoError);
   });
 });

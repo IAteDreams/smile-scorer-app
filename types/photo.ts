@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import type { ScoreEntry } from "@/types/score";
 
 export type Rect = { left: number; top: number; width: number; height: number };
 
@@ -46,9 +47,29 @@ export type PhotoDetailsData = {
   attributes: FaceAttribute[];
 };
 
+/** What `GET /api/upload/[id]` returns. */
+export type UploadInfo = {
+  id: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+  uploadedAt: string;
+  url: string;
+};
+
+/** Fetches a new signed URL for a photo; resolves false if it could not. */
+export type PhotoUrlRefresh = (id: string) => Promise<boolean>;
+
+/** What `usePhotoUrls` returns: entries with refreshed URLs applied. */
+export type PhotoUrls = {
+  entries: ScoreEntry[];
+  refresh: PhotoUrlRefresh;
+};
+
 export type PhotoViewerOptions = {
   now: number;
   timeZone: string;
+  onPhotoError?: PhotoUrlRefresh;
 };
 
 /** The dialog props `usePhotoViewer` hands to `PhotoDetails`. */
@@ -58,6 +79,7 @@ export type PhotoViewerDialog = {
   onOpenChange: (open: boolean) => void;
   onFlightStart: () => void;
   onClosed: () => void;
+  onPhotoError: () => Promise<boolean>;
 };
 
 /** What `usePhotoViewer` returns: which photo is open and its dialog props. */
@@ -65,8 +87,12 @@ export type PhotoViewer = {
   selectedId: string | null;
   hiddenId: string | null;
   show: (id: string) => void;
+  onPhotoError: PhotoUrlRefresh;
   dialog: PhotoViewerDialog;
 };
 
 /** The part of the viewer a list of thumbnails needs. */
-export type PhotoPicker = Pick<PhotoViewer, "hiddenId" | "show">;
+export type PhotoPicker = Pick<
+  PhotoViewer,
+  "hiddenId" | "show" | "onPhotoError"
+>;

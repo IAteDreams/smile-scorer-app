@@ -58,6 +58,7 @@ export function HistoryBody({ rows, query, picker }: HistoryBodyProps) {
                       id={row.id}
                       photoUrl={row.photoUrl}
                       hidden={row.id === picker.hiddenId}
+                      onError={() => void picker.onPhotoError(row.id)}
                     />
                   </button>
                 </td>

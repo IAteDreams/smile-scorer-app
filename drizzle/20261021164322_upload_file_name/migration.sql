@@ -1,0 +1,1 @@
+ALTER TABLE "upload" ADD COLUMN "file_name" text;
