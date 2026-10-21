@@ -1,0 +1,17 @@
+# Postgres for the end-to-end tests. Started by tests/support/global-setup.ts.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: smile
+      POSTGRES_PASSWORD: smile
+      POSTGRES_DB: smile_e2e
+    ports:
+      - "54329:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smile -d smile_e2e"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
