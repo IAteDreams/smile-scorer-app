@@ -48,5 +48,46 @@ jobs:
         run: pnpm typecheck
       - name: Test
         run: pnpm test
-      - name: Build
-        run: pnpm build
+      # No build step here: the e2e job runs a full production build.
+
+  e2e:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    # The Playwright config starts fake Redis/Storage/Resend and a production
+    # build of the app; only Postgres comes from a service container.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: smile
+          POSTGRES_PASSWORD: smile
+          POSTGRES_DB: smile_e2e
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd "pg_isready -U smile -d smile_e2e"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      E2E_DATABASE_URL: postgres://smile:smile@localhost:54329/smile_e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: End-to-end tests
+        run: pnpm test:e2e
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
