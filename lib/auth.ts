@@ -33,7 +33,16 @@ const redisSecondaryStorage: SecondaryStorage = {
   },
 };
 
+const previewHosts = [env.VERCEL_URL, env.VERCEL_BRANCH_URL].filter(
+  (host): host is string => !!host,
+);
+const baseURL =
+  env.VERCEL_ENV === "preview" && previewHosts.length > 0
+    ? { allowedHosts: previewHosts, protocol: "https" as const }
+    : undefined;
+
 export const auth = betterAuth({
+  baseURL,
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
@@ -78,8 +87,6 @@ export const auth = betterAuth({
   },
   advanced: {
     ipAddress: { ipAddressHeaders: ["x-forwarded-for", "cf-connecting-ip"] },
-    useSecureCookies: process.env.NODE_ENV === "production",
   },
-  // Sets session cookies when auth.api is called from route handlers. Must stay last.
   plugins: [nextCookies()],
 });
