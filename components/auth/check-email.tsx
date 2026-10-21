@@ -2,7 +2,7 @@ import { MailCheck } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { LINKS } from "@/lib/constants";
+import { LINKS } from "@/lib/constants/links";
 
 /** Shown after sign-up while the user verifies their email. */
 export function CheckEmail({ email }: { email: string }) {

@@ -5,7 +5,7 @@ import {
 } from "next/experimental/testing/server";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LINKS } from "@/lib/constants";
+import { LINKS } from "@/lib/constants/links";
 
 import { config, proxy } from "./proxy";
 

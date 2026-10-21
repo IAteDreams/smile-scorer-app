@@ -1,7 +1,7 @@
 import { Smile } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { LINKS } from "@/lib/constants";
+import { LINKS } from "@/lib/constants/links";
 
 type LogoProps = {
   href?: string;

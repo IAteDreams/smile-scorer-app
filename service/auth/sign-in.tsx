@@ -6,7 +6,7 @@ import { SignInForm } from "@/components/auth/sign-in-form";
 import { signIn } from "@/lib/auth-client";
 import { useForm } from "@/lib/hooks/use-form";
 import { signInSchema } from "@/lib/schemas/auth";
-import { LINKS } from "@/lib/constants";
+import { LINKS } from "@/lib/constants/links";
 
 export function SignIn() {
   const router = useRouter();
