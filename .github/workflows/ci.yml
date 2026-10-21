@@ -26,6 +26,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: placeholder
       SUPABASE_SECRET_KEY: placeholder
+      SUPABASE_PHOTO_BUCKET: smile-scorer-pictures
       AWS_ACCESS_KEY_ID: placeholder
       AWS_SECRET_ACCESS_KEY: placeholder
       AWS_REGION: us-east-1
