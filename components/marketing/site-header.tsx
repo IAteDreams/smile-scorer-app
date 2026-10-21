@@ -1,11 +1,13 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Logo } from "@/components/common/logo";
-import { buttonVariants } from "@/components/ui/button";
-import { LINKS } from "@/lib/constants/links";
 import { MARKETING_NAV } from "@/lib/constants/marketing";
-import { cn } from "@/lib/utils";
 
-export function SiteHeader() {
+type SiteHeaderProps = {
+  actions: ReactNode;
+};
+
+export function SiteHeader({ actions }: SiteHeaderProps) {
   return (
     <header className="border-b">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-14">
@@ -24,20 +26,7 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="flex gap-2">
-          <Link
-            href={LINKS.guest.signIn}
-            className={cn(buttonVariants({ variant: "outline" }), "rounded-lg")}
-          >
-            Sign in
-          </Link>
-          <Link
-            href={LINKS.guest.signUp}
-            className={cn(buttonVariants(), "rounded-lg")}
-          >
-            Get started
-          </Link>
-        </div>
+        {actions}
       </div>
     </header>
   );
