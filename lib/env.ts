@@ -5,13 +5,17 @@ const serverSchema = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
   BETTER_AUTH_SECRET: z.string().min(32),
-  DATABASE_URL: z.url(),
-  UPSTASH_REDIS_REST_URL: z.url(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
+  RESEND_API_KEY: z.string(),
+  POSTGRES_URL: z.url(),
+  KV_REST_API_URL: z.url(),
+  KV_REST_API_TOKEN: z.string().min(1),
   AWS_ACCESS_KEY_ID: z.string().min(1),
   AWS_SECRET_ACCESS_KEY: z.string().min(1),
   AWS_REGION: z.string().min(1),
   USE_MOCK_SCORER: z.stringbool().default(false),
+  VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
+  VERCEL_URL: z.string().optional(),
+  VERCEL_BRANCH_URL: z.string().optional(),
 });
 
 const clientSchema = z.object({

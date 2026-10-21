@@ -1,14 +1,14 @@
 import { defineConfig } from "drizzle-kit";
 import { loadEnvConfig } from "@next/env";
+import { withoutSupaParam } from "./db/url";
 
 loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is missing");
+if (!process.env.POSTGRES_URL) {
+  throw new Error("POSTGRES_URL is missing");
 }
 
-// Supabase rejects non-SSL connections
-const url = new URL(process.env.DATABASE_URL);
+const url = new URL(withoutSupaParam(process.env.POSTGRES_URL));
 if (!url.searchParams.has("sslmode"))
   url.searchParams.set("sslmode", "require");
 

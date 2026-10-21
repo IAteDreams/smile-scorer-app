@@ -3,6 +3,7 @@ import "server-only";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { relations } from "@/db/relations";
+import { withoutSupaParam } from "@/db/url";
 import { env } from "@/lib/env";
 
 const globalForDb = globalThis as unknown as {
@@ -11,7 +12,10 @@ const globalForDb = globalThis as unknown as {
 
 const client =
   globalForDb.client ??
-  postgres(env.DATABASE_URL, { prepare: false, ssl: "require" });
+  postgres(withoutSupaParam(env.POSTGRES_URL), {
+    prepare: false,
+    ssl: "require",
+  });
 
 if (env.NODE_ENV !== "production") globalForDb.client = client;
 
