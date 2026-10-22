@@ -12,7 +12,7 @@ export type LegalSection = {
 };
 
 export const PRIVACY_POLICY = {
-  lastUpdated: "October 21, 2026",
+  lastUpdated: "October 22, 2026",
   summary:
     "we store your photos only to show your history. We never sell them, never use them to train models, and you can delete them at any time.",
   sections: [
@@ -30,7 +30,7 @@ export const PRIVACY_POLICY = {
       title: "How photos are analyzed",
       paragraphs: [
         "Photos are sent to Amazon Rekognition for face attribute detection. We do not create face collections or biometric templates, and we do not identify people.",
-        "We use a few providers to run Smilescore: Amazon Web Services (photo analysis), Supabase (database), Upstash (sign-in sessions), Resend (account emails) and Vercel (hosting). They process data only on our behalf.",
+        "We use a few providers to run Smilescore: Amazon Web Services (photo analysis), Supabase (database), Upstash (sign-in sessions), Google (account emails, sent through Gmail) and Vercel (hosting). They process data only on our behalf.",
       ],
     },
     {

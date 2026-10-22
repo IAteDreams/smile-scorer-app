@@ -1,14 +1,13 @@
 import { EMAILS } from "@/lib/constants/emails";
 import { env } from "@/lib/env";
-import { resend } from "@/lib/resend";
+import { mailer } from "@/lib/mailer";
 
 type Email = { to: string; subject: string; html: string };
 
 const link = (url: string, text: string) => `<a href="${url}">${text}</a>`;
 
 async function send(email: Email) {
-  const { error } = await resend.emails.send({ from: EMAILS.from, ...email });
-  if (error) throw new Error(`Failed to send email: ${error.message}`);
+  await mailer.sendMail({ from: env.EMAIL_FROM, ...email });
 }
 
 export async function sendVerificationEmail({

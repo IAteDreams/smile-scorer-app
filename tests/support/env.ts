@@ -1,6 +1,7 @@
 /** Where the end-to-end stack runs. Nothing here points at a real service. */
 export const APP_PORT = 3100;
 export const SERVICES_PORT = 4010;
+export const SMTP_PORT = 4025;
 
 export const APP_URL = `http://localhost:${APP_PORT}`;
 export const SERVICES_URL = `http://localhost:${SERVICES_PORT}`;
@@ -17,8 +18,9 @@ export const APP_ENV = {
   NEXT_TELEMETRY_DISABLED: "1",
   BETTER_AUTH_SECRET: "e2e-only-secret-that-is-at-least-32-characters",
   BETTER_AUTH_URL: APP_URL,
-  RESEND_API_KEY: "re_e2e_fake",
-  RESEND_BASE_URL: SERVICES_URL,
+  SMTP_HOST: "localhost",
+  SMTP_PORT: String(SMTP_PORT),
+  EMAIL_FROM: "Smilescore <no-reply@smilescore.test>",
   POSTGRES_URL: DATABASE_URL,
   KV_REST_API_URL: `${SERVICES_URL}/redis`,
   KV_REST_API_TOKEN: "e2e-fake-token",

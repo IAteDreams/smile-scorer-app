@@ -5,7 +5,11 @@ const serverSchema = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
   BETTER_AUTH_SECRET: z.string().min(32),
-  RESEND_API_KEY: z.string(),
+  SMTP_HOST: z.string().min(1),
+  SMTP_PORT: z.coerce.number().int().positive().default(465),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  EMAIL_FROM: z.string().min(1),
   POSTGRES_URL: z.url(),
   SUPABASE_SECRET_KEY: z.string().min(1),
   SUPABASE_PHOTO_BUCKET: z.string().trim().min(1),
