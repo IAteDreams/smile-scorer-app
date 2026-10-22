@@ -1,15 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EMAILS } from "@/lib/constants/emails";
 
 import { sendExistingAccountEmail, sendVerificationEmail } from "./auth-emails";
 
 const { env, send } = vi.hoisted(() => ({
-  env: { NODE_ENV: "production" },
+  env: { NODE_ENV: "production", EMAIL_FROM: "Smilescore <me@gmail.test>" },
   send: vi.fn(),
 }));
 
 vi.mock("@/lib/env", () => ({ env }));
-vi.mock("@/lib/resend", () => ({ resend: { emails: { send } } }));
+vi.mock("@/lib/mailer", () => ({ mailer: { sendMail: send } }));
 
 const SIGN_IN = "https://smilescore.test/sign-in";
 const VERIFY = "https://smilescore.test/api/auth/verify-email?token=abc";
@@ -17,14 +16,14 @@ const VERIFY = "https://smilescore.test/api/auth/verify-email?token=abc";
 describe("auth emails", () => {
   beforeEach(() => {
     env.NODE_ENV = "production";
-    send.mockResolvedValue({ data: { id: "1" }, error: null });
+    send.mockResolvedValue({ messageId: "<1@gmail.test>" });
   });
   afterEach(() => vi.restoreAllMocks());
 
   it("sends a verification link", async () => {
     await sendVerificationEmail({ user: { email: "a@b.test" }, url: VERIFY });
     expect(send).toHaveBeenCalledExactlyOnceWith({
-      from: EMAILS.from,
+      from: "Smilescore <me@gmail.test>",
       to: "a@b.test",
       subject: "Verify your email",
       html: `<a href="${VERIFY}">Verify your email</a>`,
@@ -45,10 +44,10 @@ describe("auth emails", () => {
   });
 
   it("fails when the email can't be sent", async () => {
-    send.mockResolvedValue({ data: null, error: { message: "quota" } });
+    send.mockRejectedValue(new Error("Daily user sending limit exceeded"));
     await expect(
       sendExistingAccountEmail({ email: "a@b.test", signInUrl: SIGN_IN }),
-    ).rejects.toThrow("Failed to send email: quota");
+    ).rejects.toThrow("Daily user sending limit exceeded");
   });
 
   it("logs the links instead of sending in development", async () => {

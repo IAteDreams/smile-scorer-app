@@ -19,7 +19,11 @@ jobs:
     env:
       BETTER_AUTH_SECRET: ci-placeholder-secret-at-least-32-characters
       BETTER_AUTH_URL: http://localhost:3000
-      RESEND_API_KEY: placeholder
+      SMTP_HOST: localhost
+      SMTP_PORT: 465
+      SMTP_USER: placeholder
+      SMTP_PASSWORD: placeholder
+      EMAIL_FROM: Smilescore <ci@example.test>
       POSTGRES_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
       KV_REST_API_URL: https://placeholder.upstash.io
       KV_REST_API_TOKEN: placeholder
@@ -53,7 +57,7 @@ jobs:
   e2e:
     timeout-minutes: 20
     runs-on: ubuntu-latest
-    # The Playwright config starts fake Redis/Storage/Resend and a production
+    # The Playwright config starts fake Redis/Storage/SMTP and a production
     # build of the app; only Postgres comes from a service container.
     services:
       postgres:

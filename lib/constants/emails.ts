@@ -1,5 +1,4 @@
 export const EMAILS = {
-  from: "Resend <onboarding@resend.dev>",
   verify: {
     subject: "Verify your email",
     action: "Verify your email",

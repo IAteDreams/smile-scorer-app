@@ -29,7 +29,7 @@ dashboard with your average, your best and your trend.
 | Auth    | [Better Auth](https://www.better-auth.com) with sessions in Upstash Redis                                  |
 | Data    | Supabase Postgres with [Drizzle ORM](https://orm.drizzle.team), Supabase Storage for photos                |
 | Scoring | AWS Rekognition `DetectFaces`; thumbnails made with `sharp`                                                |
-| Email   | [Resend](https://resend.com)                                                                               |
+| Email   | [Nodemailer](https://nodemailer.com) over SMTP (Gmail)                                                     |
 | Testing | Vitest and Testing Library (unit), Playwright (end-to-end), PGlite (real-SQL data tests)                   |
 | Tooling | pnpm, ESLint, Prettier, Husky, lint-staged, commitlint, GitHub Actions, Vercel                             |
 
@@ -39,7 +39,9 @@ dashboard with your average, your best and your trend.
 
 - Node.js 24 (LTS)
 - pnpm 12 (`corepack enable` picks the version from `package.json`)
-- Accounts for Supabase, Upstash Redis, Resend and AWS (Rekognition)
+- Accounts for Supabase, Upstash Redis and AWS (Rekognition), and a Gmail
+  account with an [app password](https://myaccount.google.com/apppasswords)
+  (or any SMTP server) for account emails
 - Docker Desktop, only for the end-to-end tests
 
 ### 1. Install
@@ -64,7 +66,9 @@ clear error.
 | `SUPABASE_SECRET_KEY`                                      | Supabase **secret** (`sb_secret_…`) key, used server-side for photo storage. Not the publishable key: uploads fail with a row-level security error if it is |
 | `SUPABASE_PHOTO_BUCKET`                                    | Name of the private Storage bucket for photos                                                                                                               |
 | `KV_REST_API_URL`, `KV_REST_API_TOKEN`                     | Upstash Redis REST URL and token (sessions and rate limits)                                                                                                 |
-| `RESEND_API_KEY`                                           | Resend API key for verification emails                                                                                                                      |
+| `SMTP_HOST`, `SMTP_PORT`                                   | SMTP server for account emails; Gmail is `smtp.gmail.com` and `465` (the default port)                                                                      |
+| `SMTP_USER`, `SMTP_PASSWORD`                               | SMTP login; for Gmail, your address and an app password (not your Google password)                                                                          |
+| `EMAIL_FROM`                                               | Sender, e.g. `Smilescore <you@gmail.com>`; Gmail only sends as your own address or a verified alias                                                         |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` | AWS credentials that can call Rekognition `DetectFaces`                                                                                                     |
 | `USE_MOCK_SCORER`                                          | `true` skips Rekognition and returns a fixed score (useful without AWS)                                                                                     |
 
@@ -90,7 +94,8 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000). In development,
 verification emails are not sent: the link is printed in the terminal
-(`[auth] Verify you@example.com: …`), so you can sign up without Resend.
+(`[auth] Verify you@example.com: …`), so you can sign up without an email
+account. The SMTP variables still need values; any placeholder works.
 
 ## Scripts
 
@@ -115,7 +120,7 @@ migrations, so paging, ranking and the summary queries are checked for real.
 self-contained stack that never touches real services:
 
 - Postgres in Docker (`tests/docker-compose.yml`), reset and migrated each run
-- A fake server for the Upstash Redis REST API, Supabase Storage and Resend
+- A fake server for the Upstash Redis REST API, Supabase Storage and SMTP
   (`tests/support/fake-services.ts`); tests follow the real verification emails
 - A production build of the app with the mock scorer, built into `.next-e2e`
   so it never clashes with `pnpm dev`

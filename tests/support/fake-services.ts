@@ -4,7 +4,7 @@
  *
  * - Upstash Redis REST API   POST /redis, /redis/pipeline, /redis/multi-exec
  * - Supabase Storage API     /storage/v1/object/...
- * - Resend email API         POST /emails
+ * - SMTP server (emails)      port SMTP_PORT, no TLS or login
  * - Test helpers             GET  /__e2e/emails?to=<address>
  *
  * Everything lives in memory and is lost when the process stops.
@@ -15,7 +15,9 @@ import {
   type IncomingMessage,
   type ServerResponse,
 } from "node:http";
-import { SERVICES_PORT } from "./env";
+import { simpleParser } from "mailparser";
+import { SMTPServer } from "smtp-server";
+import { SERVICES_PORT, SMTP_PORT } from "./env";
 
 type Entry = { value: string; expiresAt?: number };
 type StoredFile = { bytes: Buffer; contentType: string };
@@ -248,17 +250,6 @@ const server = createServer(async (req, res) => {
       return handleStorage(req, url, raw, res);
     }
 
-    if (url.pathname === "/emails" && req.method === "POST") {
-      const body = JSON.parse(raw.toString());
-      emails.push({
-        to: [body.to].flat(),
-        subject: body.subject,
-        html: body.html,
-        sentAt: new Date().toISOString(),
-      });
-      return send(res, 200, { id: randomUUID() });
-    }
-
     if (url.pathname === "/__e2e/emails") {
       const to = url.searchParams.get("to");
       return send(
@@ -283,4 +274,26 @@ const server = createServer(async (req, res) => {
 
 server.listen(SERVICES_PORT, () => {
   console.log(`[fake-services] listening on ${SERVICES_PORT}`);
+});
+
+// Accepts whatever the app's mailer sends and keeps it for /__e2e/emails.
+const smtp = new SMTPServer({
+  authOptional: true,
+  disabledCommands: ["STARTTLS"],
+  logger: false,
+  onData(stream, session, callback) {
+    simpleParser(stream).then((mail) => {
+      emails.push({
+        to: session.envelope.rcptTo.map((recipient) => recipient.address),
+        subject: mail.subject ?? "",
+        html: typeof mail.html === "string" ? mail.html : "",
+        sentAt: new Date().toISOString(),
+      });
+      callback();
+    }, callback);
+  },
+});
+
+smtp.listen(SMTP_PORT, () => {
+  console.log(`[fake-services] SMTP listening on ${SMTP_PORT}`);
 });

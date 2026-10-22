@@ -3,7 +3,7 @@ import { APP_ENV, APP_PORT, APP_URL, SERVICES_PORT } from "./tests/support/env";
 
 /**
  * End-to-end tests run against a self-contained stack: Postgres in Docker,
- * fake Redis/Storage/Resend (tests/support/fake-services.ts) and a production
+ * fake Redis/Storage/SMTP (tests/support/fake-services.ts) and a production
  * build of the app with the mock scorer. No real service is ever called.
  */
 export default defineConfig({
